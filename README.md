@@ -14,7 +14,7 @@ The project also includes a landing page introducing the app and a page about th
 - **Keep the conversation going:** Follow-up questions use recent messages from the current chat page to provide context. The conversation is kept in browser memory; it is not saved as an account or chat history.
 - **Offer a few starting points:** Sample question buttons make it easy to get the first study session rolling.
 - **Add a little color:** Shared theme styles provide the app’s changing accent colors and consistent page controls.
-- **Run locally:** A small Node.js server serves the site and relays chat requests to Groq. No build step or database required.
+- **Deploy or run locally:** A Node.js serverless function relays chat requests to Groq on Vercel; a small local Node.js server is also included. No build step or database required.
 
 > **A quick reality check:** AI can make mistakes, even when it sounds very confident (we all know someone like that). Check important facts, calculations, and citations against your course materials.
 
@@ -34,6 +34,8 @@ The project also includes a landing page introducing the app and a page about th
 - **A Groq API key**
 - **An internet connection** for the Groq API and the external font, styling, and math-rendering resources used by the pages
 
+For Vercel deployment, you’ll also need a Vercel account and this repository connected to a Vercel project.
+
 ### 1. Get the project
 
 Clone the repository or download its source, then open a terminal in the project folder.
@@ -46,7 +48,7 @@ Create a file named `.env` in the project root (next to `server.js`) and add you
 GROQ_API_KEY=your_groq_api_key
 ```
 
-The server reads `GROQ_API_KEY` from this root `.env` file when a chat request is made. Keep the key private: **do not put it in HTML or browser JavaScript, commit it, or share it in screenshots or logs.**
+When running locally, the server reads `GROQ_API_KEY` from this root `.env` file. On Vercel, configure the same variable in the project’s Environment Variables settings instead; Vercel does not use this local `.env` file for deployments. Keep the key private: **do not put it in HTML or browser JavaScript, commit it, or share it in screenshots or logs.**
 
 ### 3. Start StudyMate
 
@@ -75,16 +77,36 @@ npm start
 
 Then open `http://127.0.0.1:4000`. The server binds to `127.0.0.1`, so it is intended for use on the same computer, not as a public hosting setup.
 
+## Deploy to Vercel ☁️
+
+The local server intentionally accepts requests only from your own computer. Vercel needs a different setup, so this project includes a serverless function at `api/chat.js` and shared chat logic in `lib/chat-api.js`. Vercel serves the static pages and runs that function for `POST /api/chat`.
+
+1. Push the project to a Git provider supported by Vercel, then import the repository into Vercel.
+2. Select the repository root as the project root. This is a plain HTML/CSS/JavaScript project; it does not need a framework build command or output directory.
+3. In **Project Settings → Environment Variables**, add:
+
+   | Name | Value |
+   | --- | --- |
+   | `GROQ_API_KEY` | Your Groq API key |
+
+   Add it to the deployment environments you intend to use (for example, Production and Preview). Do not add the key to a `VITE_`/browser variable or commit it to Git.
+4. Deploy the project, or redeploy if you added the environment variable after the first deployment.
+5. Open your Vercel deployment and try the chat. The browser sends messages to the same deployment’s `/api/chat` function.
+
+`vercel.json` gives the chat function up to 60 seconds to receive a response. The Vercel plan still determines the maximum duration available to your project. The local `.env` file is ignored by Git and is only for local development.
+
+**Usage note:** The deployed chat endpoint is public, like the rest of the website. Protect your Groq account with its available usage limits, and consider Vercel’s traffic controls if the site receives unwanted automated requests.
+
 ## How a chat request works
 
 1. You enter a question (or attach an image) in `chat.html`.
-2. `js/chat.js` builds the recent conversation context and sends it to the local server’s `POST /api/chat` endpoint.
-3. `server.js` validates the request, reads the API key from `.env`, and sends the conversation to Groq.
+2. `js/chat.js` builds the recent conversation context and sends it to `POST /api/chat`.
+3. Locally, `server.js` receives the request. On Vercel, `api/chat.js` receives it instead. Both use `lib/chat-api.js` to validate the request, read the API key from the appropriate configuration, and send the conversation to Groq.
 4. The server returns the AI’s answer to the browser, where it is rendered in the chat.
 
-Text-only requests and requests containing an image use separate model configurations in `server.js`. Images are resized in the browser where possible and validated by the server; supported formats are PNG, JPEG, and WebP, with a 4 MB upload limit. The server also applies request-size, message-count, and message-length limits.
+Text-only requests and requests containing an image use separate model configurations in `lib/chat-api.js`. Images are resized in the browser where possible and validated by the server; supported formats are PNG, JPEG, and WebP, with a 4 MB upload limit. The server also applies request-size, message-count, and message-length limits.
 
-**Privacy note:** The app server runs locally, but the content you submit—including an attached image—is sent to Groq to generate a response. Avoid sharing passwords, private personal information, or anything you would not want processed by the AI service. Review Groq’s current terms and privacy information before using the service.
+**Privacy note:** The app backend runs on your computer during local development and on Vercel after deployment, but the content you submit—including an attached image—is sent to Groq to generate a response. Avoid sharing passwords, private personal information, or anything you would not want processed by the AI service. Review Groq’s current terms and privacy information before using the service.
 
 ## Project structure 🗂️
 
@@ -94,6 +116,11 @@ studymate-ai/
 ├── chat.html            # AI study chat interface
 ├── creators.html        # Creator and representative information
 ├── server.js            # Local HTTP server and Groq API proxy
+├── api/
+│   └── chat.js           # Vercel serverless endpoint for POST /api/chat
+├── lib/
+│   └── chat-api.js       # Shared validation and Groq request handling
+├── vercel.json           # Vercel function configuration
 ├── package.json         # Project metadata and npm start command
 ├── README.md            # You are here; no map required
 ├── contribute.md        # Contribution guidelines
@@ -111,7 +138,10 @@ studymate-ai/
 
 ### A closer look at the important files
 
-- **`server.js`** serves an explicit list of site files, accepts chat requests at `/api/chat`, validates messages and image data, and forwards requests to Groq. It also handles upstream errors and timeouts.
+- **`server.js`** serves an explicit list of site files and accepts local chat requests. It is for local development; Vercel runs the separate serverless endpoint instead.
+- **`api/chat.js`** adapts Vercel’s parsed HTTP request to the shared chat handler.
+- **`lib/chat-api.js`** validates messages and image data, reads the API key from the environment (or the local `.env` fallback), and forwards requests to Groq. It also handles upstream errors and timeouts.
+- **`vercel.json`** configures the chat function’s maximum duration.
 - **`chat.html`** contains the chat form, message area, image picker, sample prompts, and icon definitions. It loads the chat styles and browser-side chat logic.
 - **`js/chat.js`** manages the chat experience: conversation context, prompt buttons, image selection and resizing, request states, and safe rendering of formatted answers.
 - **`css/themes.css`** contains the shared theme variables and styles used across the pages. The page-specific CSS files handle their respective layouts and components.
@@ -122,7 +152,7 @@ studymate-ai/
 - **HTML** for the pages and their accessible structure
 - **CSS** for custom page styling and shared themes
 - **Vanilla JavaScript** for browser interactions—no frontend framework required
-- **Node.js built-in modules** for the local HTTP server
+- **Node.js built-in modules** for the local HTTP server and Vercel function
 - **Groq API** for AI responses
 - **External CDN resources** for Tailwind CSS, Google Fonts, and KaTeX math rendering
 
@@ -132,9 +162,9 @@ Because some frontend resources are loaded from CDNs, the pages may look or form
 
 ### “The AI service is not configured”
 
-- Check that `.env` is in the same folder as `server.js`.
-- Confirm it contains a non-empty `GROQ_API_KEY=...` entry.
-- Restart the server after changing the key.
+- Locally, check that `.env` is in the project root and contains a non-empty `GROQ_API_KEY=...` entry.
+- On Vercel, check that `GROQ_API_KEY` is configured in the project’s Environment Variables settings for the environment you deployed.
+- Restart the local server or redeploy after changing the key.
 - Never paste the key into a chat message or commit it to the repository.
 
 ### The browser can’t connect to StudyMate

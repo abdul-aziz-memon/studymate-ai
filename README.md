@@ -28,9 +28,9 @@ AI can make mistakes, even when it sounds confident. Check important facts, calc
 
 ### 1. Import the repository
 
-In Vercel, import the Git repository containing this project. Set the **Root Directory** to the folder containing `vercel.json`, `package.json`, and `index.html`. Use the **Other** framework preset; this is a static HTML project with a Vercel Function, not a Node server.
+In Vercel, import the Git repository containing this project. Set the **Root Directory** to the folder containing `vercel.json` and `index.html`. Use the **Other** framework preset; this is a static HTML project with a Vercel Function, not a Node server.
 
-No build command or output directory is required. Vercel serves `index.html` and the other static assets from the project root.
+This project intentionally has no `package.json` or Node server entrypoint. No build command or output directory is required. Vercel serves `index.html` and the other static assets from the project root.
 
 ### 2. Add the Groq API key to Vercel
 
@@ -82,7 +82,6 @@ studymate-ai/
 ├── lib/
 │   └── chat-api.js      # Shared validation and Groq request handling
 ├── vercel.json          # Vercel Function configuration
-├── package.json         # Project metadata
 ├── contribute.md        # Contribution guidelines
 ├── LICENSE              # Project license
 ├── css/

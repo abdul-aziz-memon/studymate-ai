@@ -6,7 +6,7 @@ StudyMate AI is a creator-owned project and is maintained by its creator. Pull r
 
 1. Fork the repository and create a branch for your change.
 2. Keep the change focused and explain what it does in the pull request.
-3. Test the app locally with `npm start` and check the affected pages.
+3. Check the affected pages and the Vercel `/api/chat` function in a deployment preview.
 4. Open a pull request for review. Please do not include API keys, `.env` files, or other secrets.
 
 For questions about a proposed contribution, contact the creator:

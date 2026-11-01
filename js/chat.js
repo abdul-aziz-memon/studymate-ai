@@ -414,7 +414,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (error) {
       thinkingMessage.remove();
       const message = error instanceof TypeError
-        ? "Could not connect to the StudyMate server. Start it with `node server.js` and open http://127.0.0.1:3000."
+        ? "Could not connect to the StudyMate service. Please check your internet connection and try again."
         : error.message;
       addMessage(message || "Something went wrong. Please try again.", "assistant", "border-amber-200 bg-amber-50 text-amber-900");
     } finally {

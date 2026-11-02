@@ -164,6 +164,28 @@
   gap: 0.75rem;
 }
 
+.social-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  font-size: 0.75rem;
+}
+
+.social-footer-link {
+  color: var(--theme-dark);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.social-footer-link:hover {
+  color: var(--theme-primary);
+}
+
+.social-footer-discord {
+  color: #64748b;
+}
+
 .site-control-button {
   border: 1px solid var(--theme-primary);
   border-radius: 0.75rem;

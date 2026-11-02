@@ -72,13 +72,6 @@
   height: 6rem;
 }
 
-.creator-intro svg,
-.creator-intro svg *,
-.creator-art svg,
-.creator-art svg * {
-  transition: none;
-}
-
 .creator-orbit {
   position: absolute;
   border: 1px solid color-mix(in srgb, currentColor 17%, transparent);

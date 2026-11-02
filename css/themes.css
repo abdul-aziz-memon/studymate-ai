@@ -82,7 +82,7 @@
 }
 
 :where(body *) {
-  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  transition: box-shadow 180ms ease;
 }
 
 [class~="bg-slate-50"] {

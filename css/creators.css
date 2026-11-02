@@ -72,6 +72,13 @@
   height: 6rem;
 }
 
+.creator-intro svg,
+.creator-intro svg *,
+.creator-art svg,
+.creator-art svg * {
+  transition: none;
+}
+
 .creator-orbit {
   position: absolute;
   border: 1px solid color-mix(in srgb, currentColor 17%, transparent);
@@ -160,9 +167,77 @@
   font-weight: 700;
 }
 
+.creator-links {
+  display: grid;
+  gap: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 16%, white);
+  border-radius: 1.5rem;
+  padding: clamp(1.25rem, 4vw, 2rem);
+  background: white;
+  box-shadow: 0 16px 40px rgb(15 23 42 / 5%);
+}
+
+.creator-links h2 {
+  margin-top: 0.5rem;
+  color: #0f172a;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.creator-links-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.creator-link {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 14%, white);
+  border-radius: 0.9rem;
+  padding: 0.85rem 1rem;
+  color: var(--theme-dark);
+  text-decoration: none;
+}
+
+a.creator-link:hover {
+  border-color: color-mix(in srgb, var(--theme-primary) 36%, white);
+  background: var(--theme-soft);
+}
+
+.creator-link > svg {
+  width: 1.35rem;
+  height: 1.35rem;
+  flex: 0 0 auto;
+  color: var(--theme-primary);
+}
+
+.creator-link > span {
+  display: grid;
+  min-width: 0;
+  gap: 0.15rem;
+}
+
+.creator-link strong {
+  font-size: 0.8rem;
+}
+
+.creator-link span span {
+  overflow-wrap: anywhere;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
 @media (min-width: 768px) {
   .creator-card {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .creator-links {
+    grid-template-columns: minmax(12rem, 0.8fr) minmax(0, 1.2fr);
+    align-items: center;
   }
 
   .creator-art {

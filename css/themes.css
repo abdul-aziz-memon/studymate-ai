@@ -197,6 +197,8 @@
 
 .social-footer-links {
   display: flex;
+  min-width: 0;
+  max-width: 100%;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem 1rem;
@@ -215,6 +217,7 @@
 
 .social-footer-discord {
   color: #64748b;
+  overflow-wrap: anywhere;
 }
 
 .site-control-button {

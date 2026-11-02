@@ -23,14 +23,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function appendInlineMarkdown(container, text) {
-    const inlinePattern = /\\([\\`*_{}#+.!|>-])|(`+)(.*?)\2|\[([^\]]+)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)|(\*\*|__)(.+?)\7|~~(.+?)~~|(\*|_)(.+?)\10|(\$\$([\s\S]+?)\$\$)|(\$([^$\n]+?)\$)|(\\\[([\s\S]+?)\\\])|(\\\(([\s\S]+?)\\\))|(\[([^\]]*\\[a-zA-Z]+[^\]]*)\])/g;
+    const inlinePattern = /<[bB][rR]\s*\/?>|\\([\\`*_{}#+.!|>-])|(`+)(.*?)\2|\[([^\]]+)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)|(\*\*|__)(.+?)\7|~~(.+?)~~|(\*|_)(.+?)\10|(\$\$([\s\S]+?)\$\$)|(\$([^$\n]+?)\$)|(\\\[([\s\S]+?)\\\])|(\\\(([\s\S]+?)\\\))|(\[([^\]]*\\[a-zA-Z]+[^\]]*)\])/g;
     let position = 0;
     let match;
 
     while ((match = inlinePattern.exec(text))) {
       container.append(document.createTextNode(text.slice(position, match.index)));
 
-      if (match[1]) {
+      if (/^<br\s*\/?>$/i.test(match[0])) {
+        container.append(document.createElement("br"));
+      } else if (match[1]) {
         container.append(document.createTextNode(match[1]));
       } else if (match[2]) {
         const code = document.createElement("code");

@@ -30,7 +30,9 @@ AI can make mistakes, even when it sounds confident. Check important facts, calc
 
 In Vercel, import the Git repository containing this project. Set the **Root Directory** to the folder containing `vercel.json` and `index.html`. Use the **Other** framework preset; this is a static HTML project with a Vercel Function, not a Node server.
 
-This project intentionally has no `package.json` or Node server entrypoint. No build command or output directory is required. Vercel serves `index.html` and the other static assets from the project root.
+The pages are static files; `package.json` is used only to build Tailwind CSS. Vercel serves `index.html` and the other static assets from the project root. The generated `css/tailwind.css` is committed, so deployment does not require a build command.
+
+To regenerate the Tailwind stylesheet after changing page markup or utility classes, install the development dependencies with `npm install` and run `npm run build:css`. During development, `npm run watch:css` rebuilds it when source files change. Commit the regenerated `css/tailwind.css` with your changes.
 
 ### 2. Add the Groq API key to Vercel
 
@@ -107,7 +109,7 @@ studymate-ai/
 - HTML, CSS, and vanilla JavaScript
 - Vercel static hosting and Node.js Functions
 - Groq API for AI responses
-- CDN resources for Tailwind CSS, Google Fonts, and KaTeX
+- Locally generated Tailwind CSS; KaTeX is loaded from a CDN on the chat page
 
 ## Contributing 🤝
 

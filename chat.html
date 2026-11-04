@@ -52,19 +52,14 @@
 
   <main class="chat-workspace">
     <aside class="chat-sidebar" aria-label="Chat sidebar">
-      <button id="sidebar-toggle-button" class="sidebar-action sidebar-toggle-button" type="button" aria-label="Open chat menu" aria-expanded="false" aria-controls="chat-history-list">
-        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/></svg>
-        <span class="sidebar-label">Menu</span>
+      <button id="sidebar-close-button" class="sidebar-action sidebar-close-button" type="button" aria-label="Close chat sidebar">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m18 6-12 12M6 6l12 12" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/></svg>
+        <span class="sidebar-label">Close menu</span>
       </button>
       <button id="new-chat-button" class="sidebar-action sidebar-new-chat" type="button" aria-label="New chat">
         <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14m-7-7h14" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2"/></svg>
         <span class="sidebar-label">New chat</span>
       </button>
-      <button class="sidebar-action" type="button" aria-label="Search chats" title="Search chat history" disabled>
-        <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 5 5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/></svg>
-        <span class="sidebar-label">Search chats</span>
-      </button>
-
       <div class="sidebar-history">
         <p class="sidebar-heading">Recent</p>
         <p id="chat-history-status" class="chat-history-status" role="status" aria-live="polite"></p>
@@ -73,24 +68,19 @@
       </div>
 
       <div class="sidebar-bottom">
-        <button class="sidebar-action" type="button" aria-label="Explore tools" title="Coming soon" disabled>
-          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Zm7 12 .8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/></svg>
-          <span class="sidebar-label">Explore tools</span>
-        </button>
-        <button class="sidebar-action" type="button" aria-label="Settings" title="Coming soon" disabled>
+        <button id="settings-button" class="sidebar-action" type="button" aria-label="Settings" aria-haspopup="dialog" aria-controls="settings-dialog">
           <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m19.4 15 .1.1 1.2 1-1.2 2.1-1.5-.5a7.5 7.5 0 0 1-1.7 1l-.3 1.6h-2.4l-.3-1.6a7.5 7.5 0 0 1-1.7-1l-1.5.5-1.2-2.1 1.2-1a7.8 7.8 0 0 1 0-2l-1.2-1 1.2-2.1 1.5.5a7.5 7.5 0 0 1 1.7-1l.3-1.6h2.4l.3 1.6a7.5 7.5 0 0 1 1.7 1l1.5-.5 1.2 2.1-1.2 1a7.8 7.8 0 0 1 0 1.9Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"/></svg>
           <span class="sidebar-label">Settings</span>
         </button>
       </div>
     </aside>
+    <button id="sidebar-backdrop" class="sidebar-backdrop" type="button" aria-label="Close chat sidebar" tabindex="-1"></button>
 
     <section class="chat-main" aria-label="StudyMate AI chat">
-      <div class="chat-topbar">
-        <div>
-          <h1>StudyMate AI</h1>
-          <p>Zylorix v1.5 · Powered by Zylorix AI</p>
-        </div>
-        <span class="chat-status"><span aria-hidden="true"></span> Ready to chat</span>
+      <div class="chat-toolbar">
+        <button id="sidebar-toggle-button" class="sidebar-toggle-button" type="button" aria-label="Close chat sidebar" aria-expanded="true" aria-controls="chat-history-list">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/></svg>
+        </button>
       </div>
 
       <div id="chat-messages" class="chat-messages" role="log" aria-label="Chat conversation" aria-live="polite" aria-relevant="additions">
@@ -126,5 +116,54 @@
       </form>
     </section>
   </main>
+  <dialog id="settings-dialog" class="settings-dialog" aria-labelledby="settings-title">
+    <div class="settings-dialog-header">
+      <div>
+        <p class="settings-eyebrow">YOUR ACCOUNT</p>
+        <h2 id="settings-title">Settings</h2>
+      </div>
+      <button id="settings-close-button" class="settings-close-button" type="button" aria-label="Close settings">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m18 6-12 12M6 6l12 12" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/></svg>
+      </button>
+    </div>
+    <p id="settings-account-notice" class="settings-feedback" role="status" aria-live="polite"></p>
+    <section id="settings-account-panel" class="settings-account-panel" hidden>
+      <div class="settings-account-summary">
+        <span class="settings-account-avatar" id="settings-account-avatar" aria-hidden="true">S</span>
+        <div><strong id="settings-account-name">Learner</strong><span id="settings-account-email"></span></div>
+      </div>
+
+      <form id="profile-form" class="settings-form">
+        <h3>Display name</h3>
+        <label for="settings-display-name">Your name</label>
+        <input id="settings-display-name" name="displayName" type="text" autocomplete="name" minlength="2" maxlength="80" required>
+        <p id="profile-feedback" class="settings-feedback" role="status" aria-live="polite"></p>
+        <button class="settings-primary-button" type="submit">Save name</button>
+      </form>
+
+      <section id="password-settings" class="settings-form">
+        <h3>Password</h3>
+        <p id="password-provider-note" class="settings-note" hidden>Your account uses Google sign-in. Manage your password through your Google account.</p>
+        <form id="password-form" class="settings-fields">
+          <label for="current-password">Current password</label>
+          <input id="current-password" name="currentPassword" type="password" autocomplete="current-password" minlength="6" required>
+          <label for="new-password">New password</label>
+          <input id="new-password" name="newPassword" type="password" autocomplete="new-password" minlength="6" required>
+          <label for="confirm-password">Confirm new password</label>
+          <input id="confirm-password" name="confirmPassword" type="password" autocomplete="new-password" minlength="6" required>
+          <p id="password-feedback" class="settings-feedback" role="status" aria-live="polite"></p>
+          <button class="settings-primary-button" type="submit">Change password</button>
+        </form>
+      </section>
+
+      <button id="settings-logout-button" class="settings-logout-button" type="button">Log out</button>
+      <p id="logout-feedback" class="settings-feedback" role="status" aria-live="polite"></p>
+    </section>
+    <div id="settings-signed-out" class="settings-signed-out" hidden>
+      <p>Sign in to manage your account settings.</p>
+      <a href="login.html">Go to sign in</a>
+    </div>
+  </dialog>
+  <script type="module" src="js/chat-settings.js"></script>
 </body>
 </html>

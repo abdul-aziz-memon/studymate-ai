@@ -13,8 +13,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const sendButton = document.getElementById("send-button");
   const chatMessages = document.getElementById("chat-messages");
   const promptChips = document.querySelectorAll("[data-prompt]");
-  const sidebar = document.querySelector(".chat-sidebar");
+  const workspace = document.querySelector(".chat-workspace");
   const sidebarToggleButton = document.getElementById("sidebar-toggle-button");
+  const sidebarCloseButton = document.getElementById("sidebar-close-button");
+  const sidebarBackdrop = document.getElementById("sidebar-backdrop");
   const newChatButton = document.getElementById("new-chat-button");
   const chatHistoryList = document.getElementById("chat-history-list");
   const chatHistoryEmpty = document.getElementById("chat-history-empty");
@@ -382,6 +384,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function setSidebarOpen(isOpen) {
+    workspace.classList.toggle("sidebar-closed", !isOpen);
+    sidebarToggleButton.setAttribute("aria-expanded", String(isOpen));
+    sidebarToggleButton.setAttribute("aria-label", isOpen ? "Close chat sidebar" : "Open chat sidebar");
+  }
+
+  function closeSidebarOnMobile() {
+    if (window.matchMedia("(max-width: 700px)").matches) {
+      setSidebarOpen(false);
+    }
+  }
+
   function openChat(chatId) {
     if (isSending) {
       return;
@@ -397,9 +411,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderChatHistory();
     renderConversation();
     saveChatSessions();
-    sidebar.classList.remove("is-expanded");
-    sidebarToggleButton.setAttribute("aria-expanded", "false");
-    sidebarToggleButton.setAttribute("aria-label", "Open chat menu");
+    closeSidebarOnMobile();
   }
 
   function createNewChat() {
@@ -420,9 +432,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderChatHistory();
     renderConversation();
     saveChatSessions();
-    sidebar.classList.remove("is-expanded");
-    sidebarToggleButton.setAttribute("aria-expanded", "false");
-    sidebarToggleButton.setAttribute("aria-label", "Open chat menu");
+    closeSidebarOnMobile();
     chatInput.focus();
   }
 
@@ -656,10 +666,11 @@ document.addEventListener("DOMContentLoaded", () => {
   newChatButton.addEventListener("click", createNewChat);
 
   sidebarToggleButton.addEventListener("click", () => {
-    const expanded = sidebar.classList.toggle("is-expanded");
-    sidebarToggleButton.setAttribute("aria-expanded", String(expanded));
-    sidebarToggleButton.setAttribute("aria-label", expanded ? "Close chat menu" : "Open chat menu");
+    setSidebarOpen(workspace.classList.contains("sidebar-closed"));
   });
+  sidebarCloseButton.addEventListener("click", () => setSidebarOpen(false));
+  sidebarBackdrop.addEventListener("click", () => setSidebarOpen(false));
+  document.getElementById("settings-button").addEventListener("click", closeSidebarOnMobile);
 
   chatHistoryList.addEventListener("click", (event) => {
     const target = event.target instanceof Element ? event.target : null;
@@ -686,6 +697,11 @@ document.addEventListener("DOMContentLoaded", () => {
       ? savedActiveChatId
       : chatSessions[0].id;
     conversation = getActiveChat().messages;
+  }
+  if (window.matchMedia("(max-width: 700px)").matches) {
+    setSidebarOpen(false);
+  } else {
+    setSidebarOpen(true);
   }
   renderChatHistory();
   renderConversation();

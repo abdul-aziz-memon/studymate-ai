@@ -52,18 +52,24 @@
 
   <main class="chat-workspace">
     <aside class="chat-sidebar" aria-label="Chat sidebar">
-      <button class="sidebar-action sidebar-new-chat" type="button" aria-label="New chat" title="Coming soon" disabled>
+      <button id="sidebar-toggle-button" class="sidebar-action sidebar-toggle-button" type="button" aria-label="Open chat menu" aria-expanded="false" aria-controls="chat-history-list">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/></svg>
+        <span class="sidebar-label">Menu</span>
+      </button>
+      <button id="new-chat-button" class="sidebar-action sidebar-new-chat" type="button" aria-label="New chat">
         <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14m-7-7h14" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2"/></svg>
         <span class="sidebar-label">New chat</span>
       </button>
-      <button class="sidebar-action" type="button" aria-label="Search chats" title="Coming soon" disabled>
+      <button class="sidebar-action" type="button" aria-label="Search chats" title="Search chat history" disabled>
         <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 5 5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/></svg>
         <span class="sidebar-label">Search chats</span>
       </button>
 
       <div class="sidebar-history">
         <p class="sidebar-heading">Recent</p>
-        <p class="sidebar-empty">Your conversations will appear here.</p>
+        <p id="chat-history-status" class="chat-history-status" role="status" aria-live="polite"></p>
+        <p id="chat-history-empty" class="sidebar-empty">Your conversations will appear here.</p>
+        <div id="chat-history-list" class="chat-history-list" aria-label="Recent conversations"></div>
       </div>
 
       <div class="sidebar-bottom">
@@ -116,7 +122,7 @@
             <button class="prompt-chip" type="button" data-prompt="Help me solve 2x + 5 = 15">📐 Help me solve 2x + 5 = 15</button>
             <button class="prompt-chip" type="button" data-prompt="What is Newton's First Law?">🍕 What is Newton's First Law?</button>
           </div>
-          <p id="chat-help" class="chat-help">Your question is sent securely through the local StudyMate server.</p>
+          <p id="chat-help" class="chat-help">Your question is sent securely through the local StudyMate server. History is saved in this browser; images aren't saved.</p>
       </form>
     </section>
   </main>

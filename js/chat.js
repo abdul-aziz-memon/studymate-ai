@@ -1,4 +1,5 @@
 const chatEndpoint = "/api/chat";
+const chatHistoryStorageKey = "studymate-chat-history-v1";
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("chat-form");
@@ -12,7 +13,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const sendButton = document.getElementById("send-button");
   const chatMessages = document.getElementById("chat-messages");
   const promptChips = document.querySelectorAll("[data-prompt]");
-  const conversation = [];
+  const sidebar = document.querySelector(".chat-sidebar");
+  const sidebarToggleButton = document.getElementById("sidebar-toggle-button");
+  const newChatButton = document.getElementById("new-chat-button");
+  const chatHistoryList = document.getElementById("chat-history-list");
+  const chatHistoryEmpty = document.getElementById("chat-history-empty");
+  const chatHistoryStatus = document.getElementById("chat-history-status");
+  let conversation = [];
+  let chatSessions = [];
+  let activeChatId = null;
+  let savedActiveChatId = null;
   let isSending = false;
   let selectedImage = null;
   const maxImageBytes = 4 * 1024 * 1024;
@@ -257,6 +267,186 @@ document.addEventListener("DOMContentLoaded", () => {
     return row;
   }
 
+  function getActiveChat() {
+    return chatSessions.find((chat) => chat.id === activeChatId) || null;
+  }
+
+  function createChatId() {
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  function createChatTitle(text) {
+    const title = text.trim().replace(/\s+/g, " ");
+    if (!title) {
+      return "Image question";
+    }
+    return title.length > 42 ? `${title.slice(0, 39).trimEnd()}...` : title;
+  }
+
+  function loadChatSessions() {
+    try {
+      const saved = localStorage.getItem(chatHistoryStorageKey);
+      if (!saved) {
+        return [];
+      }
+
+      const parsed = JSON.parse(saved);
+      const savedChats = Array.isArray(parsed) ? parsed : parsed?.chats;
+      if (!Array.isArray(savedChats)) {
+        throw new Error("Saved chat history has an invalid format.");
+      }
+      if (!Array.isArray(parsed) && typeof parsed.activeChatId === "string") {
+        savedActiveChatId = parsed.activeChatId;
+      }
+
+      const validChats = savedChats.filter((chat) => (
+        chat
+        && typeof chat.id === "string"
+        && typeof chat.title === "string"
+        && Number.isFinite(chat.updatedAt)
+        && Array.isArray(chat.messages)
+      )).map((chat) => ({
+        id: chat.id,
+        title: chat.title.slice(0, 80),
+        updatedAt: chat.updatedAt,
+        messages: chat.messages
+          .filter((message) => (
+            message
+            && ["user", "assistant"].includes(message.role)
+            && typeof message.content === "string"
+          ))
+          .slice(-38)
+          .map(({ role, content }) => ({ role, content })),
+      }));
+
+      if (validChats.length !== savedChats.length) {
+        chatHistoryStatus.textContent = "Some saved conversations could not be loaded.";
+      }
+      return validChats;
+    } catch {
+      chatHistoryStatus.textContent = "Chat history couldn't be read from this browser.";
+      return [];
+    }
+  }
+
+  function saveChatSessions() {
+    try {
+      const savedChats = chatSessions.map((chat) => ({
+        id: chat.id,
+        title: chat.title,
+        updatedAt: chat.updatedAt,
+        messages: chat.messages.map(({ role, content }) => ({ role, content })),
+      }));
+      localStorage.setItem(chatHistoryStorageKey, JSON.stringify({ activeChatId, chats: savedChats }));
+      chatHistoryStatus.textContent = "";
+    } catch {
+      chatHistoryStatus.textContent = "Chat history couldn't be saved in this browser.";
+    }
+  }
+
+  function renderChatHistory() {
+    const sortedChats = [...chatSessions].sort((first, second) => second.updatedAt - first.updatedAt);
+    chatHistoryList.replaceChildren();
+    chatHistoryEmpty.hidden = sortedChats.length > 0;
+
+    sortedChats.forEach((chat) => {
+      const button = document.createElement("button");
+      button.className = "sidebar-chat";
+      button.type = "button";
+      button.disabled = isSending;
+      button.setAttribute("aria-current", String(chat.id === activeChatId));
+      button.title = chat.title;
+      button.dataset.chatId = chat.id;
+
+      const title = document.createElement("span");
+      title.className = "sidebar-chat-title";
+      title.textContent = chat.title;
+      const date = document.createElement("span");
+      date.className = "sidebar-chat-date";
+      date.textContent = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(chat.updatedAt);
+
+      button.append(title, date);
+      chatHistoryList.append(button);
+    });
+  }
+
+  function renderConversation() {
+    chatMessages.replaceChildren();
+    if (!conversation.length) {
+      addMessage("Hey there! I’m StudyMate AI. What are we studying today?", "assistant");
+      return;
+    }
+
+    conversation.forEach((message) => {
+      addMessage(message.content, message.role, "", message.role === "assistant", message.image || null);
+    });
+  }
+
+  function openChat(chatId) {
+    if (isSending) {
+      return;
+    }
+    const chat = chatSessions.find((session) => session.id === chatId);
+    if (!chat) {
+      return;
+    }
+    activeChatId = chat.id;
+    conversation = chat.messages;
+    clearSelectedImage();
+    chatInput.value = "";
+    renderChatHistory();
+    renderConversation();
+    saveChatSessions();
+    sidebar.classList.remove("is-expanded");
+    sidebarToggleButton.setAttribute("aria-expanded", "false");
+    sidebarToggleButton.setAttribute("aria-label", "Open chat menu");
+  }
+
+  function createNewChat() {
+    if (isSending) {
+      return;
+    }
+    const chat = {
+      id: createChatId(),
+      title: "New chat",
+      updatedAt: Date.now(),
+      messages: [],
+    };
+    chatSessions.unshift(chat);
+    activeChatId = chat.id;
+    conversation = chat.messages;
+    clearSelectedImage();
+    chatInput.value = "";
+    renderChatHistory();
+    renderConversation();
+    saveChatSessions();
+    sidebar.classList.remove("is-expanded");
+    sidebarToggleButton.setAttribute("aria-expanded", "false");
+    sidebarToggleButton.setAttribute("aria-label", "Open chat menu");
+    chatInput.focus();
+  }
+
+  function saveActiveConversation(firstQuestion) {
+    let activeChat = getActiveChat();
+    if (!activeChat) {
+      activeChat = {
+        id: createChatId(),
+        title: createChatTitle(firstQuestion),
+        updatedAt: Date.now(),
+        messages: conversation,
+      };
+      chatSessions.unshift(activeChat);
+      activeChatId = activeChat.id;
+    } else if (activeChat.title === "New chat") {
+      activeChat.title = createChatTitle(firstQuestion);
+    }
+
+    activeChat.messages = conversation;
+    activeChat.updatedAt = Date.now();
+    saveChatSessions();
+    renderChatHistory();
+  }
+
   function clearSelectedImage() {
     selectedImage = null;
     imageInput.value = "";
@@ -348,6 +538,10 @@ document.addEventListener("DOMContentLoaded", () => {
     promptChips.forEach((chip) => {
       chip.disabled = sending;
     });
+    newChatButton.disabled = sending;
+    chatHistoryList.querySelectorAll("button").forEach((button) => {
+      button.disabled = sending;
+    });
     sendButton.classList.toggle("opacity-60", sending);
     sendButton.classList.toggle("cursor-wait", sending);
   }
@@ -413,6 +607,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (conversation.length > 38) {
         conversation.splice(0, conversation.length - 38);
       }
+      saveActiveConversation(messageText);
     } catch (error) {
       thinkingMessage.remove();
       const message = error instanceof TypeError
@@ -458,6 +653,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
   removeImageButton.addEventListener("click", clearSelectedImage);
 
+  newChatButton.addEventListener("click", createNewChat);
+
+  sidebarToggleButton.addEventListener("click", () => {
+    const expanded = sidebar.classList.toggle("is-expanded");
+    sidebarToggleButton.setAttribute("aria-expanded", String(expanded));
+    sidebarToggleButton.setAttribute("aria-label", expanded ? "Close chat menu" : "Open chat menu");
+  });
+
+  chatHistoryList.addEventListener("click", (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const button = target?.closest("button[data-chat-id]");
+    if (button) {
+      openChat(button.dataset.chatId);
+    }
+  });
+
   promptChips.forEach((chip) => {
     chip.addEventListener("click", () => {
       if (isSending) {
@@ -467,4 +678,15 @@ document.addEventListener("DOMContentLoaded", () => {
       form.requestSubmit();
     });
   });
+
+  chatSessions = loadChatSessions();
+  chatSessions.sort((first, second) => second.updatedAt - first.updatedAt);
+  if (chatSessions.length) {
+    activeChatId = chatSessions.some((chat) => chat.id === savedActiveChatId)
+      ? savedActiveChatId
+      : chatSessions[0].id;
+    conversation = getActiveChat().messages;
+  }
+  renderChatHistory();
+  renderConversation();
 });

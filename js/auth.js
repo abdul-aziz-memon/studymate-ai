@@ -18,8 +18,7 @@ const submitLabel = document.getElementById("submit-label");
 const resetButton = document.getElementById("reset-password");
 const title = document.getElementById("form-title");
 const intro = document.getElementById("form-intro");
-const modeButtons = document.querySelectorAll("[data-mode]");
-let mode = "login";
+let mode = document.body.dataset.authMode === "signup" ? "signup" : "login";
 let isSubmitting = false;
 
 function showMessage(text, kind = "error") {
@@ -41,40 +40,31 @@ function getErrorMessage(error) {
   return messages[error.code] || "Something went wrong. Please try again.";
 }
 
-function setMode(nextMode) {
-  mode = nextMode;
+function setMode() {
   const signingUp = mode === "signup";
   nameGroup.classList.toggle("is-hidden", !signingUp);
   displayNameInput.required = signingUp;
   passwordInput.autocomplete = signingUp ? "new-password" : "current-password";
-  resetButton.classList.toggle("is-hidden", signingUp);
+  resetButton?.classList.toggle("is-hidden", signingUp);
   title.textContent = signingUp ? "Create your account" : "Welcome back";
   intro.textContent = signingUp
     ? "Start a study space that is yours."
     : "Sign in to pick up where you left off.";
   submitLabel.textContent = signingUp ? "Create account" : "Sign in";
-  modeButtons.forEach((button) => {
-    const active = button.dataset.mode === mode;
-    button.classList.toggle("is-active", active);
-    button.setAttribute("aria-selected", String(active));
-  });
   showMessage("");
 }
+
+setMode();
 
 function setBusy(isBusy) {
   submitButton.disabled = isBusy || !auth;
   submitLabel.textContent = isBusy
     ? "Please wait..."
     : mode === "signup" ? "Create account" : "Sign in";
-  modeButtons.forEach((button) => {
-    button.disabled = isBusy;
-  });
-  resetButton.disabled = isBusy || !auth;
+  if (resetButton) {
+    resetButton.disabled = isBusy || !auth;
+  }
 }
-
-modeButtons.forEach((button) => {
-  button.addEventListener("click", () => setMode(button.dataset.mode));
-});
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -108,7 +98,7 @@ form.addEventListener("submit", async (event) => {
   }
 });
 
-resetButton.addEventListener("click", async () => {
+resetButton?.addEventListener("click", async () => {
   if (!auth) {
     showMessage("Firebase is not connected yet. Add your project config to js/firebase-config.js.");
     return;

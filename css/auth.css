@@ -1,23 +1,11 @@
-@font-face {
-  font-family: "Inter";
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-  src: url("font-inter/Inter-VariableFont_opsz,wght.ttf") format("truetype");
-}
-
 :root {
-  color-scheme: light;
   font-family: "Inter", sans-serif;
-  color: #202b25;
-  background: #f7f8f3;
+  color: #0f172a;
+  background: var(--theme-page);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --ink: #202b25;
-  --muted: #6b756e;
-  --green: #2f684b;
-  --green-dark: #214e38;
-  --line: #dce3da;
+  --auth-ink: #0f172a;
+  --auth-muted: #64748b;
 }
 
 * {
@@ -58,8 +46,8 @@ a {
   flex-direction: column;
   overflow: hidden;
   padding: clamp(28px, 5vw, 72px);
-  background-color: #e7eee2;
-  background-image: linear-gradient(rgba(39, 81, 57, 0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(39, 81, 57, 0.055) 1px, transparent 1px);
+  background-color: var(--theme-soft);
+  background-image: linear-gradient(color-mix(in srgb, var(--theme-primary) 8%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--theme-primary) 8%, transparent) 1px, transparent 1px);
   background-size: 34px 34px;
 }
 
@@ -69,9 +57,9 @@ a {
   bottom: -180px;
   width: 440px;
   height: 440px;
-  border: 1px solid rgba(47, 104, 75, 0.18);
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 20%, transparent);
   border-radius: 50%;
-  box-shadow: 0 0 0 34px rgba(47, 104, 75, 0.035), 0 0 0 68px rgba(47, 104, 75, 0.025);
+  box-shadow: 0 0 0 34px color-mix(in srgb, var(--theme-primary) 4%, transparent), 0 0 0 68px color-mix(in srgb, var(--theme-primary) 3%, transparent);
   content: "";
 }
 
@@ -88,7 +76,7 @@ a {
 
 .wordmark b,
 .mobile-wordmark b {
-  color: var(--green);
+  color: var(--theme-primary);
 }
 
 .wordmark-mark {
@@ -97,9 +85,8 @@ a {
   aspect-ratio: 1;
   place-items: center;
   border-radius: 11px;
-  background: var(--green-dark);
-  color: #f4f3e8;
-  font-family: Georgia, serif;
+  background: var(--theme-dark);
+  color: #fff;
   font-size: 21px;
   font-weight: 400;
 }
@@ -122,8 +109,7 @@ a {
 
 .study-copy h1 {
   margin: 20px 0 18px;
-  color: #25352a;
-  font-family: Georgia, "Times New Roman", serif;
+  color: var(--theme-dark);
   font-size: clamp(52px, 6vw, 82px);
   font-weight: 400;
   letter-spacing: 0;
@@ -131,14 +117,14 @@ a {
 }
 
 .study-copy h1 em {
-  color: var(--green);
+  color: var(--theme-primary);
   font-weight: 400;
 }
 
 .study-description {
   max-width: 340px;
   margin: 0;
-  color: #59685d;
+  color: var(--auth-muted);
   font-size: 15px;
   line-height: 1.8;
 }
@@ -151,9 +137,9 @@ a {
   margin: 0 0 38px 26px;
   padding: 21px 24px;
   transform: rotate(-2deg);
-  border: 1px solid rgba(47, 104, 75, 0.22);
-  background: #f4f3e9;
-  box-shadow: 8px 9px 0 rgba(47, 104, 75, 0.1);
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 22%, transparent);
+  background: var(--theme-banner);
+  box-shadow: 8px 9px 0 color-mix(in srgb, var(--theme-primary) 10%, transparent);
 }
 
 .art-rule {
@@ -161,11 +147,11 @@ a {
   top: 0;
   bottom: 0;
   left: 14px;
-  border-left: 1px solid rgba(197, 100, 79, 0.45);
+  border-left: 1px solid color-mix(in srgb, var(--theme-primary) 45%, transparent);
 }
 
 .art-label {
-  color: #778277;
+  color: var(--auth-muted);
   font-size: 9px;
   font-weight: 750;
   letter-spacing: 0.12em;
@@ -173,8 +159,7 @@ a {
 
 .art-title {
   margin-top: 11px;
-  color: #2e593f;
-  font-family: Georgia, "Times New Roman", serif;
+  color: var(--theme-dark);
   font-size: 27px;
   line-height: 1.03;
 }
@@ -188,7 +173,7 @@ a {
 
 .art-lines i {
   height: 1px;
-  background: #c9d1c5;
+  background: color-mix(in srgb, var(--theme-primary) 24%, white);
 }
 
 .art-lines i:last-child {
@@ -204,10 +189,9 @@ a {
   aspect-ratio: 1;
   align-content: center;
   justify-items: center;
-  border: 1px solid #8da78f;
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 55%, white);
   border-radius: 50%;
-  color: #3e7352;
-  font-family: Georgia, serif;
+  color: var(--theme-dark);
   font-size: 17px;
   line-height: 1;
   transform: rotate(9deg);
@@ -215,7 +199,7 @@ a {
 
 .art-stamp span {
   margin-top: 3px;
-  font-family: "Inter", sans-serif;
+  font-family: inherit;
   font-size: 6px;
   font-weight: 750;
   letter-spacing: 0.09em;
@@ -225,8 +209,7 @@ a {
   position: relative;
   z-index: 1;
   margin: auto 0 0;
-  color: #657369;
-  font-family: Georgia, "Times New Roman", serif;
+  color: var(--auth-muted);
   font-size: 14px;
   font-style: italic;
 }
@@ -237,7 +220,7 @@ a {
   flex-direction: column;
   justify-content: center;
   padding: 48px clamp(28px, 8vw, 112px) 25px;
-  background: #fbfcf9;
+  background: var(--theme-page);
 }
 
 .form-wrap {
@@ -255,8 +238,7 @@ a {
 
 .form-wrap h2 {
   margin: 13px 0 7px;
-  color: var(--ink);
-  font-family: Georgia, "Times New Roman", serif;
+  color: var(--auth-ink);
   font-size: 39px;
   font-weight: 400;
   letter-spacing: 0;
@@ -270,42 +252,14 @@ a {
   line-height: 1.7;
 }
 
-.mode-switch {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-  margin: 32px 0 24px;
-  padding: 4px;
-  border: 1px solid #e6e9e3;
-  border-radius: 7px;
-  background: #f1f3ee;
-}
-
-.mode-button {
-  min-height: 40px;
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
-  color: #68736a;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 650;
-}
-
-.mode-button.is-active {
-  background: #fff;
-  color: var(--green-dark);
-  box-shadow: 0 1px 3px rgba(25, 45, 31, 0.12);
-}
-
 .field-group {
-  margin-bottom: 19px;
+  margin-bottom: 18px;
 }
 
 .field-group label {
   display: block;
   margin-bottom: 8px;
-  color: #344238;
+  color: var(--theme-dark);
   font-size: 12px;
   font-weight: 700;
 }
@@ -314,22 +268,22 @@ a {
   width: 100%;
   min-height: 48px;
   padding: 0 14px;
-  border: 1px solid #dce3da;
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 20%, white);
   border-radius: 5px;
   outline: none;
   background: #fff;
-  color: var(--ink);
+  color: var(--auth-ink);
   font-size: 13px;
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
 .field-group input::placeholder {
-  color: #a0aaa2;
+  color: #94a3b8;
 }
 
 .field-group input:focus {
-  border-color: #548064;
-  box-shadow: 0 0 0 3px rgba(47, 104, 75, 0.11);
+  border-color: var(--theme-primary);
+  box-shadow: 0 0 0 3px var(--theme-soft);
 }
 
 .field-group input[aria-invalid="true"] {
@@ -347,7 +301,7 @@ a {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--green);
+  color: var(--theme-primary);
   cursor: pointer;
   font-size: 11px;
   font-weight: 700;
@@ -355,7 +309,7 @@ a {
 
 .text-action:hover,
 .back-link:hover {
-  color: #183e2b;
+  color: var(--theme-dark);
 }
 
 .form-message {
@@ -367,7 +321,7 @@ a {
 }
 
 .form-message[data-kind="success"] {
-  color: #286343;
+  color: var(--theme-dark);
 }
 
 .submit-button {
@@ -377,19 +331,19 @@ a {
   align-items: center;
   justify-content: space-between;
   padding: 0 17px;
-  border: 1px solid var(--green-dark);
+  border: 1px solid var(--theme-dark);
   border-radius: 5px;
-  background: var(--green-dark);
+  background: var(--theme-gradient);
   color: #fff;
   cursor: pointer;
   font-size: 13px;
   font-weight: 700;
-  transition: background-color 150ms ease, transform 150ms ease;
+  transition: transform 150ms ease;
 }
 
 .submit-button:hover:not(:disabled) {
   transform: translateY(-1px);
-  background: #173c29;
+  background: var(--theme-dark);
 }
 
 .submit-button:disabled {
@@ -404,7 +358,7 @@ a {
 
 .legal-note {
   margin: 17px 0 25px;
-  color: #858e86;
+  color: var(--auth-muted);
   font-size: 10px;
   line-height: 1.6;
   text-align: center;
@@ -414,7 +368,7 @@ a {
   display: block;
   width: fit-content;
   margin: 0 auto;
-  color: #68736a;
+  color: var(--auth-muted);
   font-size: 12px;
   font-weight: 650;
 }
@@ -425,7 +379,7 @@ a {
 
 .form-footer {
   padding-top: 26px;
-  color: #8a938b;
+  color: var(--auth-muted);
   font-size: 10px;
   text-align: center;
 }
@@ -433,6 +387,22 @@ a {
 .form-footer span {
   padding: 0 4px;
   color: #b4bcb5;
+}
+
+.account-switch {
+  margin: 0 0 20px;
+  color: var(--auth-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.account-switch a {
+  color: var(--theme-primary);
+  font-weight: 700;
+}
+
+.account-switch a:hover {
+  color: var(--theme-dark);
 }
 
 .is-hidden {

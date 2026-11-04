@@ -3,13 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#eef4e9">
-  <meta name="description" content="Sign in or create your StudyMate AI account.">
+  <meta name="theme-color" content="#f8fafc">
+  <meta name="description" content="Sign in to your StudyMate AI account.">
   <title>Sign in — StudyMate AI</title>
+  <link rel="stylesheet" href="css/themes.css">
   <link rel="stylesheet" href="css/auth.css">
   <script type="module" src="js/auth.js"></script>
 </head>
-<body>
+<body data-auth-mode="login">
   <main class="auth-shell">
     <section class="study-side" aria-labelledby="study-title">
       <a class="wordmark" href="index.html" aria-label="StudyMate AI home">
@@ -41,11 +42,6 @@
         <h2 id="form-title">Welcome back</h2>
         <p class="form-intro" id="form-intro">Sign in to pick up where you left off.</p>
 
-        <div class="mode-switch" role="tablist" aria-label="Account access">
-          <button class="mode-button is-active" id="login-tab" type="button" role="tab" aria-selected="true" aria-controls="auth-form" data-mode="login">Sign in</button>
-          <button class="mode-button" id="signup-tab" type="button" role="tab" aria-selected="false" aria-controls="auth-form" data-mode="signup">Create account</button>
-        </div>
-
         <form id="auth-form" novalidate>
           <div class="field-group is-hidden" id="name-group">
             <label for="display-name">Your name</label>
@@ -70,6 +66,7 @@
         </form>
 
         <p class="legal-note">By continuing, you agree to use StudyMate respectfully and responsibly.</p>
+        <p class="account-switch">New to StudyMate? <a href="signup.html">Create an account</a></p>
         <a class="back-link" href="index.html"><span aria-hidden="true">&#8592;</span> Back to StudyMate</a>
       </div>
       <footer class="form-footer">StudyMate AI <span>·</span> Keep learning at your pace.</footer>

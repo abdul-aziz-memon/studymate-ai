@@ -1,8 +1,10 @@
 import {
   createUserWithEmailAndPassword,
+  GoogleAuthProvider,
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
+  signInWithPopup,
   updateProfile
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { auth } from "./firebase.js";
@@ -15,6 +17,7 @@ const passwordInput = document.getElementById("password");
 const message = document.getElementById("form-message");
 const submitButton = document.getElementById("submit-button");
 const submitLabel = document.getElementById("submit-label");
+const googleButton = document.getElementById("google-button");
 const resetButton = document.getElementById("reset-password");
 const title = document.getElementById("form-title");
 const intro = document.getElementById("form-intro");
@@ -35,7 +38,13 @@ function getErrorMessage(error) {
     "auth/user-not-found": "No account was found for this email.",
     "auth/weak-password": "Choose a password with at least 6 characters.",
     "auth/wrong-password": "That email and password combination does not match.",
-    "auth/too-many-requests": "Too many attempts. Wait a little and try again."
+    "auth/too-many-requests": "Too many attempts. Wait a little and try again.",
+    "auth/popup-closed-by-user": "Google sign-in was closed before it finished.",
+    "auth/popup-blocked": "Allow popups for this site to continue with Google.",
+    "auth/cancelled-popup-request": "A Google sign-in request is already in progress.",
+    "auth/unauthorized-domain": "This site domain is not authorized in your Firebase project.",
+    "auth/operation-not-allowed": "Enable Google sign-in in your Firebase Authentication settings.",
+    "auth/account-exists-with-different-credential": "An account with this email already exists. Sign in with its original method."
   };
   return messages[error.code] || "Something went wrong. Please try again.";
 }
@@ -61,6 +70,9 @@ function setBusy(isBusy) {
   submitLabel.textContent = isBusy
     ? "Please wait..."
     : mode === "signup" ? "Create account" : "Sign in";
+  if (googleButton) {
+    googleButton.disabled = isBusy || !auth;
+  }
   if (resetButton) {
     resetButton.disabled = isBusy || !auth;
   }
@@ -89,6 +101,26 @@ form.addEventListener("submit", async (event) => {
     } else {
       await signInWithEmailAndPassword(auth, email, password);
     }
+    window.location.replace("dashboard.html");
+  } catch (error) {
+    showMessage(getErrorMessage(error));
+  } finally {
+    isSubmitting = false;
+    setBusy(false);
+  }
+});
+
+googleButton?.addEventListener("click", async () => {
+  if (!auth) {
+    showMessage("Firebase is not connected yet. Add your project config to js/firebase-config.js.");
+    return;
+  }
+
+  isSubmitting = true;
+  setBusy(true);
+  showMessage("");
+  try {
+    await signInWithPopup(auth, new GoogleAuthProvider());
     window.location.replace("dashboard.html");
   } catch (error) {
     showMessage(getErrorMessage(error));

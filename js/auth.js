@@ -89,7 +89,7 @@ form.addEventListener("submit", async (event) => {
     } else {
       await signInWithEmailAndPassword(auth, email, password);
     }
-    window.location.replace("chat.html");
+    window.location.replace("dashboard.html");
   } catch (error) {
     showMessage(getErrorMessage(error));
   } finally {
@@ -123,7 +123,7 @@ resetButton?.addEventListener("click", async () => {
 if (auth) {
   onAuthStateChanged(auth, (user) => {
     if (user && !isSubmitting) {
-      window.location.replace("chat.html");
+      window.location.replace("dashboard.html");
     }
   });
 } else {

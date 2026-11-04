@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8fafc">
+  <meta name="description" content="Your StudyMate AI study dashboard.">
+  <title>Your dashboard — StudyMate AI</title>
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <script type="module" src="js/dashboard.js"></script>
+</head>
+<body>
+  <header class="dashboard-header">
+    <nav class="dashboard-nav" aria-label="Main navigation">
+      <a class="dashboard-brand" href="dashboard.html" aria-label="StudyMate AI dashboard">
+        <span class="brand-mark" aria-hidden="true">S</span>
+        <span>StudyMate <b>AI</b></span>
+      </a>
+      <div class="account-controls">
+        <div class="account-summary">
+          <span class="account-avatar" id="account-avatar" aria-hidden="true">S</span>
+          <span class="account-copy">
+            <span class="account-name" id="account-name">StudyMate learner</span>
+            <span class="account-email" id="account-email"></span>
+          </span>
+        </div>
+        <button class="logout-button" id="logout-button" type="button">Log out</button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="dashboard-main">
+    <section class="welcome-row" aria-labelledby="welcome-title">
+      <div>
+        <p class="dashboard-eyebrow">YOUR STUDY SPACE</p>
+        <h1 id="welcome-title">Welcome back, <span id="welcome-name">learner</span>.</h1>
+        <p class="welcome-copy">A little progress adds up. What would you like to learn today?</p>
+      </div>
+      <a class="primary-action" href="chat.html">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v18m-9-9h18" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2"/></svg>
+        Start studying
+      </a>
+    </section>
+
+    <p class="dashboard-message" id="dashboard-message" role="status" aria-live="polite"></p>
+
+    <section class="stats-grid" aria-label="Study overview">
+      <article class="stat-item">
+        <p class="stat-label">Study sessions</p>
+        <p class="stat-value">12</p>
+        <p class="stat-note">3 this week</p>
+      </article>
+      <article class="stat-item">
+        <p class="stat-label">Time focused</p>
+        <p class="stat-value">8.5 <span>hrs</span></p>
+        <p class="stat-note">Across your recent sessions</p>
+      </article>
+      <article class="stat-item">
+        <p class="stat-label">Topics explored</p>
+        <p class="stat-value">6</p>
+        <p class="stat-note">Keep your curiosity going</p>
+      </article>
+      <article class="stat-item">
+        <p class="stat-label">Current streak</p>
+        <p class="stat-value">4 <span>days</span></p>
+        <p class="stat-note">One step at a time</p>
+      </article>
+    </section>
+
+    <div class="dashboard-columns">
+      <section class="dashboard-panel activity-panel" aria-labelledby="activity-title">
+        <div class="panel-heading">
+          <div>
+            <p class="panel-kicker">PICK UP WHERE YOU LEFT OFF</p>
+            <h2 id="activity-title">Recent study topics</h2>
+          </div>
+          <a class="text-link" href="chat.html">Open study chat <span aria-hidden="true">&#8594;</span></a>
+        </div>
+        <ul class="topic-list">
+          <li class="topic-row">
+            <span class="topic-mark topic-mark-blue" aria-hidden="true">01</span>
+            <span class="topic-copy"><strong>Photosynthesis</strong><small>Biology · Yesterday</small></span>
+            <span class="topic-duration">18 min</span>
+          </li>
+          <li class="topic-row">
+            <span class="topic-mark topic-mark-rose" aria-hidden="true">02</span>
+            <span class="topic-copy"><strong>Linear equations</strong><small>Mathematics · Monday</small></span>
+            <span class="topic-duration">24 min</span>
+          </li>
+          <li class="topic-row">
+            <span class="topic-mark topic-mark-gold" aria-hidden="true">03</span>
+            <span class="topic-copy"><strong>Newton's laws of motion</strong><small>Physics · Sunday</small></span>
+            <span class="topic-duration">16 min</span>
+          </li>
+        </ul>
+      </section>
+
+      <aside class="dashboard-panel week-panel" aria-labelledby="week-title">
+        <div class="panel-heading">
+          <div>
+            <p class="panel-kicker">A STEADY RHYTHM</p>
+            <h2 id="week-title">This week</h2>
+          </div>
+          <span class="week-total">3 sessions</span>
+        </div>
+        <div class="week-list" aria-label="Sample study minutes by day">
+          <div class="week-row"><span>Mon</span><span class="week-track"><i style="--bar-width: 62%"></i></span><b>25m</b></div>
+          <div class="week-row"><span>Tue</span><span class="week-track"><i style="--bar-width: 24%"></i></span><b>10m</b></div>
+          <div class="week-row"><span>Wed</span><span class="week-track"><i style="--bar-width: 82%"></i></span><b>33m</b></div>
+          <div class="week-row"><span>Thu</span><span class="week-track"><i style="--bar-width: 0%"></i></span><b>0m</b></div>
+          <div class="week-row"><span>Fri</span><span class="week-track"><i style="--bar-width: 38%"></i></span><b>15m</b></div>
+          <div class="week-row"><span>Sat</span><span class="week-track"><i style="--bar-width: 0%"></i></span><b>0m</b></div>
+          <div class="week-row"><span>Sun</span><span class="week-track"><i style="--bar-width: 54%"></i></span><b>22m</b></div>
+        </div>
+        <p class="sample-note">Sample activity for now</p>
+      </aside>
+    </div>
+
+    <section class="next-step" aria-label="Continue studying">
+      <div>
+        <p class="panel-kicker">READY WHEN YOU ARE</p>
+        <h2>One question can start a great session.</h2>
+      </div>
+      <a class="secondary-action" href="chat.html">Go to StudyMate AI <span aria-hidden="true">&#8599;</span></a>
+    </section>
+  </main>
+</body>
+</html>

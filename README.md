@@ -2,7 +2,7 @@
 
 > A friendly study buddy for the “I read this paragraph three times and it still looks like ancient runes” moments.
 
-StudyMate AI helps students explore tricky topics with clear, encouraging explanations. Ask a question, attach a study image, and get an answer formatted for easier reading. It includes a landing page, an AI chat, and a page about the people behind the project.
+StudyMate AI helps students explore tricky topics with clear, encouraging explanations. Ask a question, attach a study image, or generate an image from a prompt. It includes a landing page, an AI chat, and a page about the people behind the project.
 
 **This project is deployed on Vercel.** The website is served as static files, and chat requests run through a Vercel serverless function. There is no local web server in this project.
 
@@ -10,6 +10,7 @@ StudyMate AI helps students explore tricky topics with clear, encouraging explan
 
 - Explain study questions in a friendly, approachable style.
 - Accept PNG, JPEG, and WebP images to ask about diagrams or written problems.
+- Generate images from text prompts with Cloudflare Workers AI.
 - Format responses with Markdown, code blocks, tables, and mathematical notation.
 - Keep recent messages in the current browser session for follow-up questions.
 - Provide sample questions to help start a study session.
@@ -41,10 +42,12 @@ In **Project → Settings → Environment Variables**, create:
 | Name | Value |
 | --- | --- |
 | `GROQ_API_KEY` | Your Groq API key |
+| `ACCOUNT_ID` | Your Cloudflare account ID |
+| `CLOUDFLARE_API_TOKEN` | A Cloudflare API token with Workers AI permissions |
 
 Select every environment you use, such as **Production**, **Preview**, and **Development**. Save the variable.
 
-The function reads `process.env.GROQ_API_KEY` directly. It does not read `.env` files. The key must remain a server-side Vercel environment variable; never add it to HTML or browser JavaScript.
+The function reads `process.env.GROQ_API_KEY`, `process.env.ACCOUNT_ID`, and `process.env.CLOUDFLARE_API_TOKEN` directly. It does not read `.env` files. These values must remain server-side Vercel environment variables; never add them to HTML or browser JavaScript.
 
 ### 3. Deploy the current commit
 
@@ -60,10 +63,10 @@ If you still see a message saying requests are only accepted from this computer,
 
 ## How chat works
 
-1. `js/chat.js` sends the current conversation to `POST /api/chat`.
+1. `js/chat.js` sends the current conversation or an image prompt to `POST /api/chat`.
 2. Vercel routes that request to `api/chat.js`.
-3. `api/chat.js` checks the HTTP method and JSON body, then calls the shared handler in `lib/chat-api.js`.
-4. `lib/chat-api.js` validates messages and images, reads the Groq key from Vercel’s environment, and sends the request to Groq.
+3. `api/chat.js` checks the HTTP method and JSON body, then routes chat and image-generation requests to `lib/chat-api.js`.
+4. `lib/chat-api.js` validates messages and images, sends chat requests to Groq, and sends image prompts to Cloudflare Workers AI.
 5. The function returns the answer to the browser.
 
 The function accepts up to 40 messages, limits each message to 4,000 characters, and validates image uploads. Images are limited to 4 MB and supported formats are PNG, JPEG, and WebP. The function is configured for a maximum duration of 60 seconds, subject to the project’s Vercel plan limits.

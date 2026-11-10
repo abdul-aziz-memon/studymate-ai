@@ -63,11 +63,11 @@ If you still see a message saying requests are only accepted from this computer,
 
 ## How chat works
 
-1. `js/chat.js` sends the current conversation or an image prompt to `POST /api/chat`.
+1. `js/chat.js` sends the current conversation or the user's image request to `POST /api/chat`.
 2. Vercel routes that request to `api/chat.js`.
 3. `api/chat.js` checks the HTTP method and JSON body, then routes chat and image-generation requests to `lib/chat-api.js`.
-4. `lib/chat-api.js` validates messages and images, sends chat requests to Groq, and sends image prompts to Cloudflare Workers AI.
-5. The function returns the answer to the browser.
+4. `lib/chat-api.js` validates messages and images. For image creation, it first asks Groq to expand the user's request into a detailed visual description, then sends that description to Cloudflare Workers AI.
+5. The function returns the answer or generated image and its prepared description to the browser.
 
 The function accepts up to 40 messages, limits each message to 4,000 characters, and validates image uploads. Images are limited to 4 MB and supported formats are PNG, JPEG, and WebP. The function is configured for a maximum duration of 60 seconds, subject to the project’s Vercel plan limits.
 

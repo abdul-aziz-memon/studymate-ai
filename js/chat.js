@@ -685,12 +685,16 @@ document.addEventListener("DOMContentLoaded", () => {
       if (typeof data?.image !== "string" || !data.image.startsWith("data:image/jpeg;base64,")) {
         throw new Error("StudyMate received an invalid image. Please try again.");
       }
+      if (typeof data?.imagePrompt !== "string" || !data.imagePrompt.trim()) {
+        throw new Error("StudyMate received an image without its prepared description. Please try again.");
+      }
 
       thinkingMessage.remove();
-      addMessage("Generated image", "assistant", "", false, data.image);
+      const imagePrompt = data.imagePrompt.trim();
+      addMessage(`Image prompt: ${imagePrompt}`, "assistant", "", true, data.image);
       conversation.push(
         { role: "user", content: prompt },
-        { role: "assistant", content: `Generated image: ${prompt}`, generatedImage: data.image }
+        { role: "assistant", content: `Image prompt: ${imagePrompt}`, generatedImage: data.image }
       );
       if (conversation.length > 38) {
         conversation.splice(0, conversation.length - 38);

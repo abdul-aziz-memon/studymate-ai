@@ -84,10 +84,30 @@
       </div>
 
       <div id="chat-messages" class="chat-messages" role="log" aria-label="Chat conversation" aria-live="polite" aria-relevant="additions">
-        <div class="flex items-end gap-2.5">
-          <span class="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-indigo-100 text-indigo-700" aria-hidden="true"><svg class="h-4 w-4" viewBox="0 0 24 24"><use href="#icon-bot"></use></svg></span>
-          <p class="max-w-[88%] rounded-2xl rounded-bl-md border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700 shadow-sm">Hey there! I’m StudyMate AI. What are we studying today?</p>
-        </div>
+        <section id="chat-empty-state" class="chat-empty-state" aria-labelledby="chat-empty-title" hidden>
+          <div class="chat-empty-card">
+            <div class="chat-empty-icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none"><path d="M24 5.5 28.7 18l12.8 4.7-12.8 4.7L24 40l-4.7-12.6L6.5 22.7 19.3 18 24 5.5Z" fill="currentColor"/><path d="m38 31 2.2 5.8L46 39l-5.8 2.2L38 47l-2.2-5.8L30 39l5.8-2.2L38 31Z" fill="currentColor" opacity=".55"/></svg>
+            </div>
+            <p class="chat-empty-eyebrow">YOUR STUDY SPACE</p>
+            <h1 id="chat-empty-title">What can I help you <span class="gradient-text">learn today?</span></h1>
+            <p class="chat-empty-description">Ask a question, explore a tricky topic, or work through a problem one step at a time.</p>
+            <div class="chat-empty-features" aria-label="StudyMate AI features">
+              <div class="chat-empty-feature">
+                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5v-16ZM4 18.5A2.5 2.5 0 0 1 6.5 16H20M8 7h8M8 10h6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"/></svg>
+                <span>Clear explanations</span>
+              </div>
+              <div class="chat-empty-feature">
+                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 17.5 10 11l4 4 6-8M15 7h5v5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/></svg>
+                <span>Step-by-step help</span>
+              </div>
+              <div class="chat-empty-feature">
+                <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3.5 2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"/></svg>
+                <span>Learn at your pace</span>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
 
       <form id="chat-form" class="chat-composer">

@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const removeImageButton = document.getElementById("remove-image-button");
   const sendButton = document.getElementById("send-button");
   const chatMessages = document.getElementById("chat-messages");
+  const chatEmptyState = document.getElementById("chat-empty-state");
   const promptChips = document.querySelectorAll("[data-prompt]");
   const workspace = document.querySelector(".chat-workspace");
   const sidebarToggleButton = document.getElementById("sidebar-toggle-button");
@@ -375,10 +376,12 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderConversation() {
     chatMessages.replaceChildren();
     if (!conversation.length) {
-      addMessage("Hey there! I’m StudyMate AI. What are we studying today?", "assistant");
+      chatEmptyState.hidden = false;
+      chatMessages.append(chatEmptyState);
       return;
     }
 
+    chatEmptyState.hidden = true;
     conversation.forEach((message) => {
       addMessage(message.content, message.role, "", message.role === "assistant", message.image || null);
     });
@@ -562,6 +565,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const messageText = question || (image ? "Please analyze this image." : "");
+    chatEmptyState.hidden = true;
     addMessage(messageText, "user", "", false, image?.dataUrl);
     setSendingState(true);
     const thinkingMessage = addMessage("StudyMate is thinking... ⚡", "assistant", "thinking-message border-indigo-200");

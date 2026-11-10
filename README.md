@@ -22,7 +22,7 @@ AI can make mistakes, even when it sounds confident. Check important facts, calc
 | --- | --- |
 | [`index.html`](index.html) | Project introduction and links to the app. |
 | [`chat.html`](chat.html) | Study chat, image attachment, and formatted answers. |
-| [`creators.html`](creators.html) | Information about the creator and representative. |
+| [`creators.html`](creators.html) | Information about the creator. |
 
 ## Deploy on Vercel ☁️
 
@@ -78,7 +78,7 @@ The deployed chat endpoint is public. Messages and attached images are sent to G
 studymate-ai/
 ├── index.html           # Landing page
 ├── chat.html            # Chat interface
-├── creators.html        # Creator and representative information
+├── creators.html        # Creator information
 ├── api/
 │   └── chat.js          # Vercel serverless endpoint: POST /api/chat
 ├── lib/
@@ -115,9 +115,9 @@ studymate-ai/
 
 Pull requests are welcome for review. Keep changes focused, check the affected pages and Vercel Function in a deployment preview, and never include API keys or other secrets. See [`contribute.md`](contribute.md).
 
-## The humans behind the study buddy 👋
+## The creator behind the study buddy 👋
 
-Created by **AbdulAziz Memon** and represented by **Syed Saifullah**.
+Created by **AbdulAziz Memon**.
 
 - Email: [xantrailstudio@gmail.com](mailto:xantrailstudio@gmail.com)
 - Discord: `@abdul_aziz_memon`

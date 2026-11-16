@@ -10,9 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const imagePreviewThumbnail = document.getElementById("image-preview-thumbnail");
   const imagePreviewName = document.getElementById("image-preview-name");
   const removeImageButton = document.getElementById("remove-image-button");
-  const createImageToggle = document.getElementById("create-image-toggle");
   const sendButton = document.getElementById("send-button");
-  const sendLabel = sendButton.querySelector(".send-label");
   const chatMessages = document.getElementById("chat-messages");
   const chatEmptyState = document.getElementById("chat-empty-state");
   const promptChips = document.querySelectorAll("[data-prompt]");
@@ -385,7 +383,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     chatEmptyState.hidden = true;
     conversation.forEach((message) => {
-      addMessage(message.content, message.role, "", message.role === "assistant", message.generatedImage || message.image || null);
+      addMessage(message.content, message.role, "", message.role === "assistant", message.image || null);
     });
   }
 
@@ -546,9 +544,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function setSendingState(sending) {
     isSending = sending;
     chatInput.disabled = sending;
-    createImageToggle.disabled = sending;
-    imageInput.disabled = sending || createImageToggle.checked;
-    imageButton.disabled = sending || createImageToggle.checked;
+    imageInput.disabled = sending;
+    imageButton.disabled = sending;
     removeImageButton.disabled = sending;
     sendButton.disabled = sending;
     promptChips.forEach((chip) => {
@@ -560,18 +557,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     sendButton.classList.toggle("opacity-60", sending);
     sendButton.classList.toggle("cursor-wait", sending);
-  }
-
-  function updateComposerMode() {
-    const creatingImage = createImageToggle.checked;
-    if (creatingImage && selectedImage) {
-      clearSelectedImage();
-    }
-    chatInput.placeholder = creatingImage ? "Describe the image you want..." : "Message StudyMate AI...";
-    sendLabel.textContent = creatingImage ? "Create" : "Send";
-    sendButton.setAttribute("aria-label", creatingImage ? "Create image" : "Send message");
-    imageInput.disabled = isSending || creatingImage;
-    imageButton.disabled = isSending || creatingImage;
   }
 
   async function sendQuestion(question, image = null) {
@@ -655,77 +640,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  async function sendImagePrompt(prompt) {
-    if (isSending) {
-      return;
-    }
-
-    chatEmptyState.hidden = true;
-    addMessage(prompt, "user");
-    setSendingState(true);
-    const thinkingMessage = addMessage("Creating your image... 🎨", "assistant", "thinking-message border-indigo-200");
-
-    try {
-      const response = await fetch(chatEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "image", prompt }),
-      });
-
-      let data;
-      try {
-        data = await response.json();
-      } catch {
-        throw new Error("StudyMate server returned an unreadable response. Please try again.");
-      }
-
-      if (!response.ok) {
-        throw new Error(data?.error || "StudyMate could not create the image. Please try again shortly.");
-      }
-      if (typeof data?.image !== "string" || !data.image.startsWith("data:image/jpeg;base64,")) {
-        throw new Error("StudyMate received an invalid image. Please try again.");
-      }
-      if (typeof data?.imagePrompt !== "string" || !data.imagePrompt.trim()) {
-        throw new Error("StudyMate received an image without its prepared description. Please try again.");
-      }
-
-      thinkingMessage.remove();
-      const imagePrompt = data.imagePrompt.trim();
-      addMessage(`Image prompt: ${imagePrompt}`, "assistant", "", true, data.image);
-      conversation.push(
-        { role: "user", content: prompt },
-        { role: "assistant", content: `Image prompt: ${imagePrompt}`, generatedImage: data.image }
-      );
-      if (conversation.length > 38) {
-        conversation.splice(0, conversation.length - 38);
-      }
-      saveActiveConversation(prompt);
-    } catch (error) {
-      thinkingMessage.remove();
-      const message = error instanceof TypeError
-        ? "Could not connect to the StudyMate service. Please check your internet connection and try again."
-        : error.message;
-      addMessage(message || "Something went wrong. Please try again.", "assistant", "border-amber-200 bg-amber-50 text-amber-900");
-    } finally {
-      setSendingState(false);
-      if (!chatInput.disabled) {
-        chatInput.focus();
-      }
-    }
-  }
-
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     const question = chatInput.value.trim();
     if (isSending) {
-      return;
-    }
-    if (createImageToggle.checked) {
-      if (!question) {
-        return;
-      }
-      chatInput.value = "";
-      sendImagePrompt(question);
       return;
     }
     if (!question && !selectedImage) {
@@ -734,8 +652,6 @@ document.addEventListener("DOMContentLoaded", () => {
     chatInput.value = "";
     sendQuestion(question, selectedImage);
   });
-
-  createImageToggle.addEventListener("change", updateComposerMode);
 
   imageButton.addEventListener("click", () => {
     if (!isSending) {

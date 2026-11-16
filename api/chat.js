@@ -1,4 +1,4 @@
-const { handleChatBody, handleImageGenerationBody, sendJson } = require("../lib/chat-api");
+const { handleChatBody, sendJson } = require("../lib/chat-api");
 
 const maxRequestBytes = 8 * 1024 * 1024;
 
@@ -40,10 +40,6 @@ async function handler(request, response) {
 
   try {
     const body = await getRequestBody(request);
-    if (body?.mode === "image") {
-      await handleImageGenerationBody(body, response);
-      return;
-    }
     await handleChatBody(body, response);
   } catch (error) {
     if (error.statusCode) {

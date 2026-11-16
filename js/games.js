@@ -1,7 +1,25 @@
+const activityApiPromise = import("./activity.js").then(
+  (activity) => ({ activity }),
+  (error) => ({ error })
+);
+
+function createActivityId() {
+  return crypto.randomUUID();
+}
+
+async function saveActivityRecord(activityId, record) {
+  const { activity, error } = await activityApiPromise;
+  if (error) {
+    throw new Error("Activity tracking could not load from Firebase. Refresh the page to try again.");
+  }
+  return activity.saveActivityRecord(activityId, record);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const gamesMenu = document.getElementById("games-menu");
   const gameStage = document.getElementById("game-stage");
   const gameChoices = document.querySelectorAll("[data-start-game]");
+  const activitySaveStatus = document.getElementById("activity-save-status");
 
   if (!gamesMenu || !gameStage || !gameChoices.length) {
     return;
@@ -44,13 +62,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     return cards;
   };
-  const ticTacToe = { board: Array(9).fill(""), turn: "X", finished: false, status: "", difficulty: "mid" };
+  const ticTacToe = { board: Array(9).fill(""), turn: "X", finished: false, thinking: false, status: "", difficulty: "mid", moves: [] };
   const memory = {
     cards: shuffledMemoryFaces(),
     flipped: [],
     matched: new Set(),
     locked: false,
-    mismatchTimer: null
+    mismatchTimer: null,
+    moves: [],
+    attempts: 0
   };
   let selectedGame = null;
   let mathRound = 1;
@@ -58,6 +78,135 @@ document.addEventListener("DOMContentLoaded", () => {
   let mathQuestion = createMathQuestion();
   let mathAnswered = false;
   let mathFeedback = "";
+  let gameRecord = null;
+  let gameElapsedMs = 0;
+  let gameLastTick = performance.now();
+  let gameClockActive = false;
+  let gamesViewActive = false;
+  let activityTrackingEnabled = true;
+  let gameWriteQueue = Promise.resolve();
+  let lastGameSnapshot = "";
+  let aiTurnToken = 0;
+
+  function updateGameClock() {
+    const now = performance.now();
+    if (gameClockActive) {
+      gameElapsedMs += now - gameLastTick;
+    }
+    gameLastTick = now;
+    gameClockActive = Boolean(
+      gameRecord
+      && !gameRecord.finished
+      && selectedGame
+      && gamesViewActive
+      && document.visibilityState === "visible"
+    );
+  }
+
+  function saveGameActivity() {
+    updateGameClock();
+    if (!activityTrackingEnabled || !gameRecord) {
+      return;
+    }
+    const record = {
+      type: "game",
+      game: gameRecord.game,
+      outcome: gameRecord.outcome,
+      difficulty: gameRecord.difficulty,
+      startedAtMs: gameRecord.startedAtMs,
+      finishedAtMs: gameRecord.finishedAtMs,
+      durationMs: Math.floor(gameElapsedMs),
+      durationSeconds: Math.floor(gameElapsedMs / 1000),
+      details: JSON.parse(JSON.stringify(gameRecord.details))
+    };
+    const snapshot = JSON.stringify(record);
+    if (snapshot === lastGameSnapshot) {
+      return;
+    }
+    lastGameSnapshot = snapshot;
+    const activityId = gameRecord.id;
+    gameWriteQueue = gameWriteQueue.catch(() => {}).then(() => saveActivityRecord(activityId, record));
+    gameWriteQueue.then(() => {
+      activitySaveStatus.textContent = "";
+    }, (error) => {
+      activityTrackingEnabled = false;
+      console.error("Could not save game activity.", error);
+      activitySaveStatus.textContent = error.message || "Could not save game activity to your dashboard.";
+    });
+  }
+
+  function startGameRecord(name) {
+    gameElapsedMs = 0;
+    gameLastTick = performance.now();
+    lastGameSnapshot = "";
+    gameRecord = {
+      id: createActivityId(),
+      game: name,
+      outcome: "in-progress",
+      difficulty: name === "tic-tac-toe" ? ticTacToe.difficulty : null,
+      startedAtMs: Date.now(),
+      finishedAtMs: null,
+      finished: false,
+      details: name === "tic-tac-toe"
+        ? { moves: [] }
+        : name === "memory"
+          ? { pairsFound: 0, attempts: 0, flips: 0, moves: [] }
+          : { questionsAnswered: 0, correct: 0, incorrect: 0, rounds: [] }
+    };
+    updateGameClock();
+    saveGameActivity();
+  }
+
+  function finishGameRecord(outcome) {
+    if (!gameRecord || gameRecord.finished) {
+      return;
+    }
+    updateGameClock();
+    gameRecord.outcome = outcome;
+    gameRecord.finishedAtMs = Date.now();
+    gameRecord.finished = true;
+    gameClockActive = false;
+    saveGameActivity();
+  }
+
+  function closeGameRecord(outcome = "abandoned") {
+    if (gameRecord && outcome === "abandoned" && gameRecord.game === "quick-math" && gameRecord.details.questionsAnswered > 0) {
+      finishGameRecord("completed");
+    } else {
+      finishGameRecord(outcome);
+    }
+    gameRecord = null;
+    gameClockActive = false;
+    gameLastTick = performance.now();
+    aiTurnToken += 1;
+  }
+
+  function startGameState(name) {
+    if (name === "tic-tac-toe") {
+      ticTacToe.board = Array(9).fill("");
+      ticTacToe.turn = "X";
+      ticTacToe.finished = false;
+      ticTacToe.thinking = false;
+      ticTacToe.status = "";
+      ticTacToe.moves = [];
+    } else if (name === "memory") {
+      window.clearTimeout(memory.mismatchTimer);
+      memory.cards = shuffledMemoryFaces();
+      memory.flipped = [];
+      memory.matched.clear();
+      memory.locked = false;
+      memory.mismatchTimer = null;
+      memory.moves = [];
+      memory.attempts = 0;
+    } else {
+      mathRound = 1;
+      mathScore = 0;
+      mathQuestion = createMathQuestion();
+      mathAnswered = false;
+      mathFeedback = "";
+    }
+    startGameRecord(name);
+  }
 
   function createMathQuestion() {
     const operation = Math.floor(Math.random() * 3);
@@ -119,7 +268,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <button class="game-cell game-cell-${mark.toLowerCase()}" type="button"
         data-action="tic-tac-toe-move" data-cell="${index}"
         aria-label="Cell ${index + 1}${mark ? `, ${mark}` : ", empty"}"
-        ${mark || ticTacToe.finished ? "disabled" : ""}>${mark}</button>
+        ${mark || ticTacToe.finished || ticTacToe.thinking ? "disabled" : ""}>${mark}</button>
     `).join("");
     renderGameFrame(gameNames["tic-tac-toe"], status, `
       <div class="game-difficulty">
@@ -273,9 +422,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (getWinner(ticTacToe.board)) {
       ticTacToe.status = mark === "X" ? "You win!" : "The AI wins!";
       ticTacToe.finished = true;
+      ticTacToe.thinking = false;
+      finishGameRecord(mark === "X" ? "win" : "loss");
     } else if (ticTacToe.board.every(Boolean)) {
       ticTacToe.status = "It's a draw!";
       ticTacToe.finished = true;
+      ticTacToe.thinking = false;
+      finishGameRecord("draw");
     }
     return ticTacToe.finished;
   }
@@ -287,6 +440,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const playerWinningMove = findWinningMove(board, "X");
       if (playerWinningMove !== -1) {
         board[playerWinningMove] = "X";
+        ticTacToe.moves.push({ mark: "X", player: "ai", cell: playerWinningMove, rule: "completed-player-line" });
+        if (gameRecord) {
+          gameRecord.details.moves = ticTacToe.moves;
+        }
         finishTicTacToe("X");
         return;
       }
@@ -319,9 +476,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (move !== undefined && move !== -1) {
       board[move] = "O";
+      ticTacToe.moves.push({ mark: "O", player: "ai", cell: move });
+      if (gameRecord) {
+        gameRecord.details.moves = ticTacToe.moves;
+      }
       if (!finishTicTacToe("O")) {
         ticTacToe.turn = "X";
       }
+      saveGameActivity();
     }
   }
 
@@ -361,6 +523,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function showGameMenu() {
+    closeGameRecord();
+    aiTurnToken += 1;
     selectedGame = null;
     gamesMenu.hidden = false;
     gameStage.hidden = true;
@@ -371,7 +535,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!Object.hasOwn(gameNames, name)) {
       return;
     }
+    closeGameRecord();
     selectedGame = name;
+    startGameState(name);
     gamesMenu.hidden = true;
     gameStage.hidden = false;
     renderSelectedGame();
@@ -410,23 +576,47 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (button.dataset.action === "tic-tac-toe-move") {
       const cell = Number(button.dataset.cell);
-      if (ticTacToe.finished || !Number.isInteger(cell) || cell < 0 || cell >= ticTacToe.board.length || ticTacToe.board[cell]) {
+      if (ticTacToe.finished || ticTacToe.thinking || !Number.isInteger(cell) || cell < 0 || cell >= ticTacToe.board.length || ticTacToe.board[cell]) {
         return;
       }
       ticTacToe.board[cell] = "X";
+      ticTacToe.moves.push({ mark: "X", player: "human", cell });
+      if (gameRecord) {
+        gameRecord.details.moves = ticTacToe.moves;
+      }
       if (!finishTicTacToe("X")) {
         ticTacToe.turn = "O";
-        makeAiMove();
+        ticTacToe.thinking = true;
+        ticTacToe.status = "AI is thinking...";
+        const turnToken = ++aiTurnToken;
+        renderTicTacToe();
+        saveGameActivity();
+        window.setTimeout(() => {
+          if (selectedGame !== "tic-tac-toe" || ticTacToe.finished || turnToken !== aiTurnToken) {
+            return;
+          }
+          ticTacToe.thinking = false;
+          ticTacToe.status = "";
+          makeAiMove();
+          renderTicTacToe();
+        }, 1000);
+        return;
       }
+      saveGameActivity();
       renderTicTacToe();
       return;
     }
 
     if (button.dataset.action === "reset-tic-tac-toe") {
+      closeGameRecord();
+      startGameState("tic-tac-toe");
       ticTacToe.board = Array(9).fill("");
       ticTacToe.turn = "X";
       ticTacToe.finished = false;
+      ticTacToe.thinking = false;
       ticTacToe.status = "";
+      ticTacToe.moves = [];
+      aiTurnToken += 1;
       renderTicTacToe();
       return;
     }
@@ -437,12 +627,28 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
       memory.flipped.push(card);
+      memory.moves.push({ card, face: memory.cards[card] });
+      if (gameRecord) {
+        gameRecord.details.moves = memory.moves;
+        gameRecord.details.flips = memory.moves.length;
+      }
       if (memory.flipped.length === 2) {
+        memory.attempts += 1;
+        if (gameRecord) {
+          gameRecord.details.attempts = memory.attempts;
+        }
         if (memory.cards[memory.flipped[0]] === memory.cards[memory.flipped[1]]) {
           memory.flipped.forEach((index) => memory.matched.add(index));
+          if (gameRecord) {
+            gameRecord.details.pairsFound = memory.matched.size / 2;
+          }
           memory.flipped = [];
+          if (memory.matched.size === memory.cards.length) {
+            finishGameRecord("win");
+          }
         } else {
           memory.locked = true;
+          saveGameActivity();
           renderMemory();
           memory.mismatchTimer = window.setTimeout(() => {
             memory.flipped = [];
@@ -455,17 +661,15 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
       }
+      saveGameActivity();
       renderMemory();
       return;
     }
 
     if (button.dataset.action === "reset-memory") {
+      closeGameRecord(memory.matched.size === memory.cards.length ? "win" : "abandoned");
       window.clearTimeout(memory.mismatchTimer);
-      memory.mismatchTimer = null;
-      memory.cards = shuffledMemoryFaces();
-      memory.flipped = [];
-      memory.matched.clear();
-      memory.locked = false;
+      startGameState("memory");
       renderMemory();
       return;
     }
@@ -477,6 +681,18 @@ document.addEventListener("DOMContentLoaded", () => {
       if (isCorrect) {
         mathScore += 1;
       }
+      if (gameRecord) {
+        gameRecord.details.questionsAnswered += 1;
+        gameRecord.details[isCorrect ? "correct" : "incorrect"] += 1;
+        gameRecord.details.rounds.push({
+          round: mathRound,
+          question: mathQuestion.prompt,
+          answer: mathQuestion.answer,
+          selected: Number(button.dataset.answer),
+          correct: isCorrect
+        });
+      }
+      saveGameActivity();
       renderQuickMath();
       return;
     }
@@ -486,6 +702,7 @@ document.addEventListener("DOMContentLoaded", () => {
       mathQuestion = createMathQuestion();
       mathAnswered = false;
       mathFeedback = "";
+      saveGameActivity();
       renderQuickMath();
     }
   });
@@ -495,20 +712,29 @@ document.addEventListener("DOMContentLoaded", () => {
     if (target?.id !== "tic-tac-toe-difficulty" || !Object.hasOwn(ticTacToeDifficulties, target.value)) {
       return;
     }
+    closeGameRecord();
     ticTacToe.difficulty = target.value;
-    ticTacToe.board = Array(9).fill("");
-    ticTacToe.turn = "X";
-    ticTacToe.finished = false;
-    ticTacToe.status = "";
+    startGameState("tic-tac-toe");
     renderTicTacToe();
     gameStage.querySelector("#tic-tac-toe-difficulty")?.focus();
   });
 
   document.addEventListener("studymate:show-view", (event) => {
+    gamesViewActive = event.detail === "games";
     if (event.detail === "games") {
       showGameMenu();
+    } else {
+      updateGameClock();
+      closeGameRecord();
     }
   });
+
+  document.addEventListener("visibilitychange", () => {
+    updateGameClock();
+    saveGameActivity();
+  });
+  window.addEventListener("beforeunload", () => closeGameRecord());
+  window.setInterval(saveGameActivity, 10000);
 
   showGameMenu();
 });

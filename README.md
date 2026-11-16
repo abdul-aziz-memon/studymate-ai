@@ -46,6 +46,10 @@ Select every environment you use, such as **Production**, **Preview**, and **Dev
 
 The function reads `process.env.GROQ_API_KEY` directly. It does not read `.env` files. This value must remain a server-side Vercel environment variable; never add it to HTML or browser JavaScript.
 
+### Enable Firestore activity tracking
+
+Create a Cloud Firestore database in the Firebase console and publish the rules in [`firestore.rules`](firestore.rules). The rules let signed-in users access only their own activity records under `users/{userId}/activity`. Activity records store game results and timing, plus chat message counts and timing; chat text and attached images are not included. Users need to be signed in for their activity to sync to the dashboard.
+
 ### 3. Deploy the current commit
 
 Push the changes to the Git branch connected to Vercel, then wait for a **new deployment of that commit** to finish. If you add or change an environment variable, redeploy afterward—existing deployments do not automatically receive updated variables.
@@ -64,7 +68,8 @@ If you still see a message saying requests are only accepted from this computer,
 2. Vercel routes that request to `api/chat.js`.
 3. `api/chat.js` checks the HTTP method and JSON body, then sends the chat request to `lib/chat-api.js`.
 4. `lib/chat-api.js` validates messages and attached images, then sends the request to Groq.
-5. The function returns the answer to the browser.
+5. `js/activity.js` saves signed-in users' game and chat activity to their private Firestore records for the dashboard.
+6. The function returns the answer to the browser.
 
 The function accepts up to 40 messages, limits each message to 4,000 characters, and validates image uploads. Images are limited to 4 MB and supported formats are PNG, JPEG, and WebP. The function is configured for a maximum duration of 60 seconds, subject to the project’s Vercel plan limits.
 
@@ -81,6 +86,7 @@ studymate-ai/
 ├── creators.html        # Creator information
 ├── api/
 │   └── chat.js          # Vercel serverless endpoint: POST /api/chat
+├── firestore.rules      # Firestore rules for private user activity
 ├── lib/
 │   └── chat-api.js      # Shared validation and Groq request handling
 ├── vercel.json          # Vercel Function configuration
@@ -89,10 +95,15 @@ studymate-ai/
 ├── css/
 │   ├── homepage.css     # Landing page styles
 │   ├── chat.css         # Chat and answer styles
+│   ├── dashboard.css    # Dashboard and activity-history styles
 │   ├── creators.css     # Creators page styles
 │   └── themes.css       # Shared theme styles and controls
 └── js/
+    ├── activity.js      # Firebase game and chat activity records
     ├── chat.js          # Chat UI, image preparation, and rendering
+    ├── dashboard.js     # Firebase-backed activity dashboard
+    ├── firebase.js      # Shared Firebase Auth and Firestore setup
+    ├── games.js         # Games and game activity tracking
     └── themes.js        # Shared page-control behavior
 ```
 
@@ -100,6 +111,8 @@ studymate-ai/
 
 - **`api/chat.js`** is the Vercel Function. It accepts JSON `POST` requests at `/api/chat` and returns JSON responses.
 - **`lib/chat-api.js`** holds the chat validation, Groq API request, and upstream error handling shared by the function.
+- **`js/activity.js`** stores signed-in users' game results and chat counts/timing in Firestore.
+- **`firestore.rules`** restricts activity access to its owning Firebase user.
 - **`vercel.json`** configures the chat function’s maximum duration.
 - **`js/chat.js`** handles the browser chat, prompt buttons, image preparation, and response formatting.
 - **`chat.html`** defines the chat form and message area.

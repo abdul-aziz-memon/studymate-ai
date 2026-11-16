@@ -1,5 +1,21 @@
 const chatEndpoint = "/api/chat";
 const chatHistoryStorageKey = "studymate-chat-history-v1";
+const activityApiPromise = import("./activity.js").then(
+  (activity) => ({ activity }),
+  (error) => ({ error })
+);
+
+function createActivityId() {
+  return crypto.randomUUID();
+}
+
+async function saveActivityRecord(activityId, record) {
+  const { activity, error } = await activityApiPromise;
+  if (error) {
+    throw new Error("Activity tracking could not load from Firebase. Refresh the page to try again.");
+  }
+  return activity.saveActivityRecord(activityId, record);
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("chat-form");
@@ -22,14 +38,83 @@ document.addEventListener("DOMContentLoaded", () => {
   const chatHistoryList = document.getElementById("chat-history-list");
   const chatHistoryEmpty = document.getElementById("chat-history-empty");
   const chatHistoryStatus = document.getElementById("chat-history-status");
+  const activitySaveStatus = document.getElementById("activity-save-status");
   let conversation = [];
   let chatSessions = [];
   let activeChatId = null;
   let savedActiveChatId = null;
   let isSending = false;
   let selectedImage = null;
+  let activityTrackingEnabled = true;
+  let activityView = "chat";
+  let activityStartedAtMs = Date.now();
+  let activityElapsedMs = 0;
+  let activityLastTick = performance.now();
+  let activityActive = document.visibilityState === "visible";
+  let activitySessionId = createActivityId();
+  let activityConversationId = null;
+  const activityConversationIds = new Set();
+  let messagesSent = 0;
+  let messagesAnswered = 0;
+  let messagesFailed = 0;
+  let activityWriteQueue = Promise.resolve();
+  let lastActivitySnapshot = "";
   const maxImageBytes = 4 * 1024 * 1024;
   const maxEncodedImageBytes = 1536 * 1024;
+
+  function updateActivityClock() {
+    const now = performance.now();
+    if (activityActive) {
+      activityElapsedMs += now - activityLastTick;
+    }
+    activityLastTick = now;
+  }
+
+  function saveChatActivity() {
+    updateActivityClock();
+    if (!activityTrackingEnabled) {
+      return;
+    }
+    const record = {
+      type: "chat",
+      conversationId: activityConversationId,
+      conversationIds: [...activityConversationIds],
+      startedAtMs: activityStartedAtMs,
+      durationMs: Math.floor(activityElapsedMs),
+      durationSeconds: Math.floor(activityElapsedMs / 1000),
+      messagesSent,
+      messagesAnswered,
+      messagesFailed
+    };
+    const snapshot = JSON.stringify(record);
+    if (snapshot === lastActivitySnapshot) {
+      return;
+    }
+    lastActivitySnapshot = snapshot;
+    activityWriteQueue = activityWriteQueue.catch(() => {}).then(() => saveActivityRecord(activitySessionId, record));
+    activityWriteQueue.then(() => {
+      activitySaveStatus.textContent = "";
+    }, (error) => {
+      activityTrackingEnabled = false;
+      console.error("Could not save chat activity.", error);
+      activitySaveStatus.textContent = error.message || "Could not save chat activity to your dashboard.";
+    });
+  }
+
+  function updateChatActivityState() {
+    updateActivityClock();
+    activityActive = activityView === "chat" && document.visibilityState === "visible";
+    activityLastTick = performance.now();
+    saveChatActivity();
+  }
+
+  function setActivityConversation(conversationId) {
+    activityConversationId = conversationId;
+    if (conversationId) {
+      activityConversationIds.add(conversationId);
+    }
+    saveChatActivity();
+  }
 
   function scrollToLatestMessage() {
     chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: "smooth" });
@@ -408,6 +493,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     activeChatId = chat.id;
+    setActivityConversation(chat.id);
     conversation = chat.messages;
     clearSelectedImage();
     chatInput.value = "";
@@ -429,6 +515,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     chatSessions.unshift(chat);
     activeChatId = chat.id;
+    setActivityConversation(chat.id);
     conversation = chat.messages;
     clearSelectedImage();
     chatInput.value = "";
@@ -626,7 +713,11 @@ document.addEventListener("DOMContentLoaded", () => {
         conversation.splice(0, conversation.length - 38);
       }
       saveActiveConversation(messageText);
+      messagesAnswered += 1;
+      setActivityConversation(activeChatId);
     } catch (error) {
+      messagesFailed += 1;
+      saveChatActivity();
       thinkingMessage.remove();
       const message = error instanceof TypeError
         ? "Could not connect to the StudyMate service. Please check your internet connection and try again."
@@ -649,6 +740,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!question && !selectedImage) {
       return;
     }
+    messagesSent += 1;
+    saveChatActivity();
     chatInput.value = "";
     sendQuestion(question, selectedImage);
   });
@@ -691,6 +784,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  document.addEventListener("studymate:show-view", (event) => {
+    activityView = event.detail;
+    updateChatActivityState();
+  });
+  document.addEventListener("visibilitychange", updateChatActivityState);
+  window.addEventListener("beforeunload", saveChatActivity);
+  window.setInterval(saveChatActivity, 10000);
+
   promptChips.forEach((chip) => {
     chip.addEventListener("click", () => {
       if (isSending) {
@@ -707,6 +808,7 @@ document.addEventListener("DOMContentLoaded", () => {
     activeChatId = chatSessions.some((chat) => chat.id === savedActiveChatId)
       ? savedActiveChatId
       : chatSessions[0].id;
+    setActivityConversation(activeChatId);
     conversation = getActiveChat().messages;
   }
   if (window.matchMedia("(max-width: 700px)").matches) {
@@ -716,4 +818,5 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   renderChatHistory();
   renderConversation();
+  saveChatActivity();
 });

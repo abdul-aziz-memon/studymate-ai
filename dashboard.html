@@ -45,77 +45,50 @@
 
     <p class="dashboard-message" id="dashboard-message" role="status" aria-live="polite"></p>
 
-    <section class="stats-grid" aria-label="Study overview">
+    <section class="stats-grid" aria-label="Study and game overview">
       <article class="stat-item">
-        <p class="stat-label">Study sessions</p>
-        <p class="stat-value">12</p>
-        <p class="stat-note">3 this week</p>
+        <p class="stat-label">Games played</p>
+        <p class="stat-value" id="games-played">0</p>
+        <p class="stat-note">All recorded games</p>
       </article>
       <article class="stat-item">
-        <p class="stat-label">Time focused</p>
-        <p class="stat-value">8.5 <span>hrs</span></p>
-        <p class="stat-note">Across your recent sessions</p>
+        <p class="stat-label">Wins</p>
+        <p class="stat-value" id="games-won">0</p>
+        <p class="stat-note" id="games-results-note">0 losses · 0 draws</p>
       </article>
       <article class="stat-item">
-        <p class="stat-label">Topics explored</p>
-        <p class="stat-value">6</p>
-        <p class="stat-note">Keep your curiosity going</p>
+        <p class="stat-label">Time playing</p>
+        <p class="stat-value" id="game-time">0 <span>sec</span></p>
+        <p class="stat-note">Active game time</p>
       </article>
       <article class="stat-item">
-        <p class="stat-label">Current streak</p>
-        <p class="stat-value">4 <span>days</span></p>
-        <p class="stat-note">One step at a time</p>
+        <p class="stat-label">Chat messages</p>
+        <p class="stat-value" id="chat-messages-count">0</p>
+        <p class="stat-note">Questions sent to StudyMate</p>
+      </article>
+      <article class="stat-item">
+        <p class="stat-label">Chat time</p>
+        <p class="stat-value" id="chat-time">0 <span>sec</span></p>
+        <p class="stat-note">Active chat time</p>
+      </article>
+      <article class="stat-item">
+        <p class="stat-label">Chats</p>
+        <p class="stat-value" id="chat-sessions">0</p>
+        <p class="stat-note">Conversations opened</p>
       </article>
     </section>
 
-    <div class="dashboard-columns">
-      <section class="dashboard-panel activity-panel" aria-labelledby="activity-title">
+    <section class="dashboard-panel activity-panel" aria-labelledby="activity-title">
         <div class="panel-heading">
           <div>
-            <p class="panel-kicker">PICK UP WHERE YOU LEFT OFF</p>
-            <h2 id="activity-title">Recent study topics</h2>
+            <p class="panel-kicker">YOUR HISTORY</p>
+            <h2 id="activity-title">Games and chat activity</h2>
           </div>
-          <a class="text-link" href="chat.html">Open study chat <span aria-hidden="true">&#8594;</span></a>
+          <a class="text-link" href="chat.html">Play or chat <span aria-hidden="true">&#8594;</span></a>
         </div>
-        <ul class="topic-list">
-          <li class="topic-row">
-            <span class="topic-mark topic-mark-blue" aria-hidden="true">01</span>
-            <span class="topic-copy"><strong>Photosynthesis</strong><small>Biology · Yesterday</small></span>
-            <span class="topic-duration">18 min</span>
-          </li>
-          <li class="topic-row">
-            <span class="topic-mark topic-mark-rose" aria-hidden="true">02</span>
-            <span class="topic-copy"><strong>Linear equations</strong><small>Mathematics · Monday</small></span>
-            <span class="topic-duration">24 min</span>
-          </li>
-          <li class="topic-row">
-            <span class="topic-mark topic-mark-gold" aria-hidden="true">03</span>
-            <span class="topic-copy"><strong>Newton's laws of motion</strong><small>Physics · Sunday</small></span>
-            <span class="topic-duration">16 min</span>
-          </li>
-        </ul>
-      </section>
-
-      <aside class="dashboard-panel week-panel" aria-labelledby="week-title">
-        <div class="panel-heading">
-          <div>
-            <p class="panel-kicker">A STEADY RHYTHM</p>
-            <h2 id="week-title">This week</h2>
-          </div>
-          <span class="week-total">3 sessions</span>
-        </div>
-        <div class="week-list" aria-label="Sample study minutes by day">
-          <div class="week-row"><span>Mon</span><span class="week-track"><i style="--bar-width: 62%"></i></span><b>25m</b></div>
-          <div class="week-row"><span>Tue</span><span class="week-track"><i style="--bar-width: 24%"></i></span><b>10m</b></div>
-          <div class="week-row"><span>Wed</span><span class="week-track"><i style="--bar-width: 82%"></i></span><b>33m</b></div>
-          <div class="week-row"><span>Thu</span><span class="week-track"><i style="--bar-width: 0%"></i></span><b>0m</b></div>
-          <div class="week-row"><span>Fri</span><span class="week-track"><i style="--bar-width: 38%"></i></span><b>15m</b></div>
-          <div class="week-row"><span>Sat</span><span class="week-track"><i style="--bar-width: 0%"></i></span><b>0m</b></div>
-          <div class="week-row"><span>Sun</span><span class="week-track"><i style="--bar-width: 54%"></i></span><b>22m</b></div>
-        </div>
-        <p class="sample-note">Sample activity for now</p>
-      </aside>
-    </div>
+        <p class="activity-empty" id="activity-empty">Your game and chat activity will show up here.</p>
+        <ol class="activity-list" id="activity-list" aria-live="polite"></ol>
+    </section>
 
     <section class="next-step" aria-label="Continue studying">
       <div>

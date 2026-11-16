@@ -651,6 +651,20 @@ body {
   padding: 0.45rem clamp(0.65rem, 2vw, 1rem);
 }
 
+.activity-save-status {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0 clamp(1rem, 3vw, 2rem);
+  color: #64748b;
+  font-size: 0.72rem;
+  text-align: right;
+}
+
+.activity-save-status:not(:empty) {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
 .chat-messages {
   display: flex;
   min-height: 0;

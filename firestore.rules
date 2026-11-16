@@ -1,0 +1,56 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function ownsActivity(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function validGameActivity(data) {
+      return data.keys().hasOnly([
+          'type', 'game', 'outcome', 'difficulty', 'startedAtMs',
+          'finishedAtMs', 'durationMs', 'durationSeconds', 'details', 'updatedAt'
+        ])
+        && data.game in ['tic-tac-toe', 'memory', 'quick-math']
+        && data.outcome in ['in-progress', 'win', 'loss', 'draw', 'completed', 'abandoned']
+        && data.startedAtMs is int
+        && data.durationMs is int
+        && data.durationSeconds is int
+        && data.details is map
+        && (
+          (data.game == 'tic-tac-toe'
+            && data.difficulty in ['low', 'mid', 'high', 'extreme']
+            && data.details.keys().hasOnly(['moves']))
+          || (data.game == 'memory'
+            && data.details.keys().hasOnly(['pairsFound', 'attempts', 'flips', 'moves']))
+          || (data.game == 'quick-math'
+            && data.details.keys().hasOnly(['questionsAnswered', 'correct', 'incorrect', 'rounds']))
+        );
+    }
+
+    function validChatActivity(data) {
+      return data.keys().hasOnly([
+          'type', 'conversationId', 'conversationIds', 'startedAtMs',
+          'durationMs', 'durationSeconds', 'messagesSent', 'messagesAnswered',
+          'messagesFailed', 'updatedAt'
+        ])
+        && data.startedAtMs is int
+        && data.durationMs is int
+        && data.durationSeconds is int
+        && data.messagesSent is int
+        && data.messagesAnswered is int
+        && data.messagesFailed is int
+        && data.conversationIds is list;
+    }
+
+    match /users/{userId}/activity/{activityId} {
+      allow read, delete: if ownsActivity(userId);
+      allow create, update: if ownsActivity(userId)
+        && request.resource.data.type in ['game', 'chat']
+        && (
+          (request.resource.data.type == 'game' && validGameActivity(request.resource.data))
+          || (request.resource.data.type == 'chat' && validChatActivity(request.resource.data))
+        );
+    }
+  }
+}

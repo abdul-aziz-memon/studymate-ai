@@ -219,7 +219,7 @@ button {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   border-top: 1px solid color-mix(in srgb, var(--theme-primary) 18%, white);
   border-bottom: 1px solid color-mix(in srgb, var(--theme-primary) 18%, white);
   background: color-mix(in srgb, white 68%, var(--theme-soft));
@@ -232,6 +232,14 @@ button {
 
 .stat-item + .stat-item {
   border-left: 1px solid color-mix(in srgb, var(--theme-primary) 15%, white);
+}
+
+.stat-item:nth-child(n + 4) {
+  border-top: 1px solid color-mix(in srgb, var(--theme-primary) 15%, white);
+}
+
+.stat-item:nth-child(3n + 1) {
+  border-left: 0;
 }
 
 .stat-label,
@@ -314,6 +322,59 @@ button {
   margin: 20px 0 0;
   padding: 0;
   list-style: none;
+}
+
+.activity-empty {
+  margin: 22px 0 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.activity-list {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activity-entry {
+  min-width: 0;
+  border-top: 1px solid #e8edf2;
+  padding: 16px 0 4px;
+}
+
+.activity-entry-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.activity-entry-title {
+  margin: 0;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.activity-entry-summary,
+.activity-entry-date,
+.activity-entry-details {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.activity-entry-date {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  text-align: right;
+}
+
+.activity-entry-details {
+  overflow-wrap: anywhere;
 }
 
 .topic-row {
@@ -496,13 +557,16 @@ button {
     padding: 18px 16px;
   }
 
-  .stat-item:nth-child(3) {
+  .stat-item:nth-child(n + 3) {
     border-top: 1px solid color-mix(in srgb, var(--theme-primary) 15%, white);
-    border-left: 0;
   }
 
-  .stat-item:nth-child(4) {
-    border-top: 1px solid color-mix(in srgb, var(--theme-primary) 15%, white);
+  .stat-item:nth-child(3n + 1) {
+    border-left: 1px solid color-mix(in srgb, var(--theme-primary) 15%, white);
+  }
+
+  .stat-item:nth-child(2n + 1) {
+    border-left: 0;
   }
 
   .dashboard-columns {

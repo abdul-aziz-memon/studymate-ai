@@ -467,6 +467,49 @@ body {
   font-size: 0.9rem;
 }
 
+.game-difficulty {
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  margin: 0 auto 1.25rem;
+}
+
+.game-difficulty-label {
+  color: #334155;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.game-difficulty-select {
+  min-width: 10rem;
+  min-height: 2.5rem;
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 24%, white);
+  border-radius: 0.7rem;
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  background: white;
+  color: #0f172a;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.game-difficulty-select:focus-visible {
+  outline: 3px solid var(--theme-secondary);
+  outline-offset: 3px;
+}
+
+.game-difficulty-description,
+.game-player-hint {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.game-player-hint {
+  color: #475569;
+  font-weight: 650;
+}
+
 .game-board {
   display: grid;
   gap: 0.6rem;

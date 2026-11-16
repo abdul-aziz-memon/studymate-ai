@@ -12,6 +12,24 @@ document.addEventListener("DOMContentLoaded", () => {
     memory: "Memory Match",
     "quick-math": "Quick Math"
   };
+  const ticTacToeDifficulties = {
+    low: {
+      label: "Low",
+      description: "Goofy AI: it avoids easy wins and may finish your line for you."
+    },
+    mid: {
+      label: "Mid",
+      description: "The AI looks for wins and blocks obvious threats."
+    },
+    high: {
+      label: "High",
+      description: "The AI also sets up forks and tries to avoid your traps."
+    },
+    extreme: {
+      label: "Extreme",
+      description: "The AI uses its best strategy and will never lose."
+    }
+  };
   const winningLines = [
     [0, 1, 2], [3, 4, 5], [6, 7, 8],
     [0, 3, 6], [1, 4, 7], [2, 5, 8],
@@ -26,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     return cards;
   };
-  const ticTacToe = { board: Array(9).fill(""), turn: "X", finished: false, status: "" };
+  const ticTacToe = { board: Array(9).fill(""), turn: "X", finished: false, status: "", difficulty: "mid" };
   const memory = {
     cards: shuffledMemoryFaces(),
     flipped: [],
@@ -89,14 +107,14 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
       <div class="game-play-card">
         <h2 class="game-title">${name}</h2>
-        <p class="game-status">${status}</p>
+        <p class="game-status" role="status" aria-live="polite">${status}</p>
         ${content}
       </div>
     `;
   }
 
   function renderTicTacToe() {
-    const status = ticTacToe.status || `${ticTacToe.turn}'s turn`;
+    const status = ticTacToe.status || "Your turn (X)";
     const cells = ticTacToe.board.map((mark, index) => `
       <button class="game-cell game-cell-${mark.toLowerCase()}" type="button"
         data-action="tic-tac-toe-move" data-cell="${index}"
@@ -104,9 +122,207 @@ document.addEventListener("DOMContentLoaded", () => {
         ${mark || ticTacToe.finished ? "disabled" : ""}>${mark}</button>
     `).join("");
     renderGameFrame(gameNames["tic-tac-toe"], status, `
+      <div class="game-difficulty">
+        <label class="game-difficulty-label" for="tic-tac-toe-difficulty">AI difficulty</label>
+        <select class="game-difficulty-select" id="tic-tac-toe-difficulty" name="tic-tac-toe-difficulty">
+          ${Object.entries(ticTacToeDifficulties).map(([value, difficulty]) => `
+            <option value="${value}" ${ticTacToe.difficulty === value ? "selected" : ""}>${difficulty.label}</option>
+          `).join("")}
+        </select>
+        <p class="game-difficulty-description">${ticTacToeDifficulties[ticTacToe.difficulty].description}</p>
+        <p class="game-player-hint">You are X · AI is O</p>
+      </div>
       <div class="game-board game-board-tic-tac-toe" role="group" aria-label="Tic-tac-toe board">${cells}</div>
       <button class="game-control" type="button" data-action="reset-tic-tac-toe">New round</button>
     `);
+  }
+
+  function getWinner(board) {
+    const winningLine = winningLines.find((line) => line.every((index) => board[index] && board[index] === board[line[0]]));
+    return winningLine ? board[winningLine[0]] : "";
+  }
+
+  function findWinningMove(board, mark) {
+    for (const line of winningLines) {
+      const markedCells = line.filter((index) => board[index] === mark);
+      const emptyCells = line.filter((index) => !board[index]);
+      if (markedCells.length === 2 && emptyCells.length === 1) {
+        return emptyCells[0];
+      }
+    }
+    return -1;
+  }
+
+  function findForkMove(board, mark) {
+    for (let index = 0; index < board.length; index += 1) {
+      if (board[index]) {
+        continue;
+      }
+      board[index] = mark;
+      let threats = 0;
+      for (const line of winningLines) {
+        const markedCells = line.filter((cell) => board[cell] === mark);
+        const emptyCells = line.filter((cell) => !board[cell]);
+        if (markedCells.length === 2 && emptyCells.length === 1) {
+          threats += 1;
+        }
+      }
+      board[index] = "";
+      if (threats > 1) {
+        return index;
+      }
+    }
+    return -1;
+  }
+
+  function getHighDifficultyMove(board) {
+    const winningMove = findWinningMove(board, "O");
+    if (winningMove !== -1) {
+      return winningMove;
+    }
+
+    const blockingMove = findWinningMove(board, "X");
+    if (blockingMove !== -1) {
+      return blockingMove;
+    }
+
+    const forkMove = findForkMove(board, "O");
+    if (forkMove !== -1) {
+      return forkMove;
+    }
+
+    if (findForkMove(board, "X") !== -1) {
+      for (let index = 0; index < board.length; index += 1) {
+        if (board[index]) {
+          continue;
+        }
+        board[index] = "O";
+        const preventsFork = findForkMove(board, "X") === -1;
+        board[index] = "";
+        if (preventsFork) {
+          return index;
+        }
+      }
+    }
+
+    if (!board[4]) {
+      return 4;
+    }
+
+    const oppositeCorners = [[0, 8], [2, 6], [6, 2], [8, 0]];
+    for (const [corner, opposite] of oppositeCorners) {
+      if (board[opposite] === "X" && !board[corner]) {
+        return corner;
+      }
+    }
+
+    const corners = [0, 2, 6, 8].filter((index) => !board[index]);
+    if (corners.length) {
+      return corners[Math.floor(Math.random() * corners.length)];
+    }
+    const sides = [1, 3, 5, 7].filter((index) => !board[index]);
+    return sides[Math.floor(Math.random() * sides.length)];
+  }
+
+  function getExtremeDifficultyMove(board) {
+    function minimax(isAiTurn, depth) {
+      const winner = getWinner(board);
+      if (winner === "O") {
+        return 10 - depth;
+      }
+      if (winner === "X") {
+        return depth - 10;
+      }
+      if (board.every(Boolean)) {
+        return 0;
+      }
+
+      let bestScore = isAiTurn ? -Infinity : Infinity;
+      for (let index = 0; index < board.length; index += 1) {
+        if (board[index]) {
+          continue;
+        }
+        board[index] = isAiTurn ? "O" : "X";
+        const score = minimax(!isAiTurn, depth + 1);
+        board[index] = "";
+        bestScore = isAiTurn ? Math.max(bestScore, score) : Math.min(bestScore, score);
+      }
+      return bestScore;
+    }
+
+    let bestScore = -Infinity;
+    let bestMoves = [];
+    for (let index = 0; index < board.length; index += 1) {
+      if (board[index]) {
+        continue;
+      }
+      board[index] = "O";
+      const score = minimax(false, 1);
+      board[index] = "";
+      if (score > bestScore) {
+        bestScore = score;
+        bestMoves = [index];
+      } else if (score === bestScore) {
+        bestMoves.push(index);
+      }
+    }
+    return bestMoves[Math.floor(Math.random() * bestMoves.length)];
+  }
+
+  function finishTicTacToe(mark) {
+    if (getWinner(ticTacToe.board)) {
+      ticTacToe.status = mark === "X" ? "You win!" : "The AI wins!";
+      ticTacToe.finished = true;
+    } else if (ticTacToe.board.every(Boolean)) {
+      ticTacToe.status = "It's a draw!";
+      ticTacToe.finished = true;
+    }
+    return ticTacToe.finished;
+  }
+
+  function makeAiMove() {
+    const board = ticTacToe.board;
+    let move;
+    if (ticTacToe.difficulty === "low") {
+      const playerWinningMove = findWinningMove(board, "X");
+      if (playerWinningMove !== -1) {
+        board[playerWinningMove] = "X";
+        finishTicTacToe("X");
+        return;
+      }
+      const emptyCells = board.map((mark, index) => mark ? -1 : index).filter((index) => index !== -1);
+      const movesThatDoNotWin = emptyCells.filter((index) => {
+        board[index] = "O";
+        const avoidsWinning = getWinner(board) !== "O";
+        board[index] = "";
+        return avoidsWinning;
+      });
+      const choices = movesThatDoNotWin.length ? movesThatDoNotWin : emptyCells;
+      move = choices[Math.floor(Math.random() * choices.length)];
+    } else if (ticTacToe.difficulty === "mid") {
+      move = findWinningMove(board, "O");
+      if (move === -1) {
+        move = findWinningMove(board, "X");
+      }
+      if (move === -1 && !board[4]) {
+        move = 4;
+      }
+      if (move === -1) {
+        const emptyCells = board.map((mark, index) => mark ? -1 : index).filter((index) => index !== -1);
+        move = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+      }
+    } else if (ticTacToe.difficulty === "high") {
+      move = getHighDifficultyMove(board);
+    } else {
+      move = getExtremeDifficultyMove(board);
+    }
+
+    if (move !== undefined && move !== -1) {
+      board[move] = "O";
+      if (!finishTicTacToe("O")) {
+        ticTacToe.turn = "X";
+      }
+    }
   }
 
   function renderMemory() {
@@ -194,20 +410,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (button.dataset.action === "tic-tac-toe-move") {
       const cell = Number(button.dataset.cell);
-      if (ticTacToe.finished || ticTacToe.board[cell]) {
+      if (ticTacToe.finished || !Number.isInteger(cell) || cell < 0 || cell >= ticTacToe.board.length || ticTacToe.board[cell]) {
         return;
       }
-      ticTacToe.board[cell] = ticTacToe.turn;
-      const winner = winningLines.some((line) => line.every((index) => ticTacToe.board[index] === ticTacToe.turn));
-      if (winner) {
-        ticTacToe.status = `${ticTacToe.turn} wins!`;
-        ticTacToe.finished = true;
-      } else if (ticTacToe.board.every(Boolean)) {
-        ticTacToe.status = "It's a draw!";
-        ticTacToe.finished = true;
-      } else {
-        ticTacToe.turn = ticTacToe.turn === "X" ? "O" : "X";
-        ticTacToe.status = "";
+      ticTacToe.board[cell] = "X";
+      if (!finishTicTacToe("X")) {
+        ticTacToe.turn = "O";
+        makeAiMove();
       }
       renderTicTacToe();
       return;
@@ -279,6 +488,20 @@ document.addEventListener("DOMContentLoaded", () => {
       mathFeedback = "";
       renderQuickMath();
     }
+  });
+
+  gameStage.addEventListener("change", (event) => {
+    const target = event.target;
+    if (target?.id !== "tic-tac-toe-difficulty" || !Object.hasOwn(ticTacToeDifficulties, target.value)) {
+      return;
+    }
+    ticTacToe.difficulty = target.value;
+    ticTacToe.board = Array(9).fill("");
+    ticTacToe.turn = "X";
+    ticTacToe.finished = false;
+    ticTacToe.status = "";
+    renderTicTacToe();
+    gameStage.querySelector("#tic-tac-toe-difficulty")?.focus();
   });
 
   document.addEventListener("studymate:show-view", (event) => {

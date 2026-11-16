@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="css/homepage.css">
   <link rel="stylesheet" href="css/themes.css">
   <script src="js/themes.js" defer></script>
+  <script type="module" src="js/homepage-auth.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased">
   <svg xmlns="http://www.w3.org/2000/svg" class="hidden" aria-hidden="true">
@@ -43,7 +44,7 @@
         <a class="transition hover:text-indigo-600" href="creators.html">Creator</a>
         <a class="transition hover:text-indigo-600" href="chat.html">Study AI</a>
       </div>
-      <a href="login.html" aria-label="Sign in to StudyMate AI" class="gradient-button inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white sm:px-4">
+      <a id="auth-navigation-link" href="login.html" aria-label="Sign in to StudyMate AI" class="gradient-button inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white sm:px-4">
         <span>Sign in</span><svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24"><use href="#icon-arrow-up-right"></use></svg>
       </a>
     </nav>

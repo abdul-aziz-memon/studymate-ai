@@ -226,6 +226,181 @@ body {
   font-size: 0.65rem;
 }
 
+.sidebar-games {
+  margin: 1rem 0.35rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 20%, white);
+  border-radius: 0.9rem;
+  padding: 0.75rem;
+  background: color-mix(in srgb, var(--theme-soft) 42%, white);
+}
+
+.sidebar-games .sidebar-heading {
+  margin-bottom: 0.65rem;
+  color: var(--theme-dark);
+}
+
+.game-picker {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.25rem;
+}
+
+.game-picker-button {
+  min-height: 2rem;
+  border: 1px solid transparent;
+  border-radius: 0.55rem;
+  padding: 0.25rem 0.15rem;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.game-picker-button:hover,
+.game-picker-button[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--theme-primary) 20%, white);
+  background: white;
+  color: var(--theme-dark);
+}
+
+.game-picker-button:focus-visible,
+.game-control:focus-visible,
+.game-cell:focus-visible,
+.memory-card:focus-visible {
+  outline: 3px solid var(--theme-secondary);
+  outline-offset: 2px;
+}
+
+.game-content {
+  margin-top: 0.7rem;
+}
+
+.game-title {
+  margin: 0;
+  color: #1e293b;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.game-status {
+  min-height: 1.1rem;
+  margin: 0.25rem 0 0.55rem;
+  color: #64748b;
+  font-size: 0.65rem;
+  line-height: 1.4;
+}
+
+.game-board {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0 auto;
+}
+
+.game-board-tic-tac-toe {
+  width: min(100%, 10rem);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.game-cell,
+.memory-card {
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 24%, white);
+  border-radius: 0.55rem;
+  background: white;
+  color: var(--theme-dark);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 750;
+}
+
+.game-cell {
+  aspect-ratio: 1;
+  font-size: 1.3rem;
+}
+
+.game-cell:disabled,
+.memory-card:disabled {
+  cursor: default;
+}
+
+.game-cell:not(:disabled):hover,
+.memory-card:not(:disabled):hover {
+  border-color: var(--theme-primary);
+  background: var(--theme-soft);
+}
+
+.game-cell-x {
+  color: var(--theme-primary);
+}
+
+.game-cell-o {
+  color: var(--theme-secondary);
+}
+
+.game-control {
+  display: block;
+  min-height: 2rem;
+  margin: 0.6rem auto 0;
+  border: 0;
+  border-radius: 0.55rem;
+  padding: 0.35rem 0.7rem;
+  background: var(--theme-gradient);
+  color: white;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.memory-board {
+  width: min(100%, 11rem);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.memory-card {
+  aspect-ratio: 1;
+  font-size: 1.1rem;
+}
+
+.memory-card[aria-pressed="false"] {
+  background: var(--theme-soft);
+  color: var(--theme-dark);
+  font-size: 0.9rem;
+}
+
+.math-question {
+  margin: 0.65rem 0;
+  color: var(--theme-dark);
+  font-size: 1.25rem;
+  font-weight: 750;
+  text-align: center;
+}
+
+.math-answers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.math-answer {
+  min-height: 2.2rem;
+  margin: 0;
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 24%, white);
+}
+
+.math-feedback {
+  min-height: 1rem;
+  margin: 0.45rem 0 0;
+  color: var(--theme-dark);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-align: center;
+}
+
 .sidebar-bottom {
   display: grid;
   gap: 0.25rem;

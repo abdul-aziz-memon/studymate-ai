@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="css/themes.css">
   <script src="js/themes.js" defer></script>
   <script src="js/chat.js" defer></script>
+  <script src="js/games.js" defer></script>
 </head>
 <body class="chat-page bg-slate-50 text-slate-900 antialiased">
   <svg xmlns="http://www.w3.org/2000/svg" class="hidden" aria-hidden="true">
@@ -66,6 +67,16 @@
         <p id="chat-history-empty" class="sidebar-empty">Your conversations will appear here.</p>
         <div id="chat-history-list" class="chat-history-list" aria-label="Recent conversations"></div>
       </div>
+
+      <section class="sidebar-games" aria-labelledby="games-heading">
+        <h2 id="games-heading" class="sidebar-heading">Games</h2>
+        <div class="game-picker" role="group" aria-label="Choose a game">
+          <button class="game-picker-button" type="button" data-game="tic-tac-toe" aria-pressed="true">Tic-tac-toe</button>
+          <button class="game-picker-button" type="button" data-game="memory" aria-pressed="false">Memory</button>
+          <button class="game-picker-button" type="button" data-game="quick-math" aria-pressed="false">Quick Math</button>
+        </div>
+        <div id="game-content" class="game-content" aria-live="polite"></div>
+      </section>
 
       <div class="sidebar-bottom">
         <button id="settings-button" class="sidebar-action" type="button" aria-label="Settings" aria-haspopup="dialog" aria-controls="settings-dialog">

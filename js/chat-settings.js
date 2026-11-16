@@ -8,9 +8,6 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { auth } from "./firebase.js";
 
-const settingsButton = document.getElementById("settings-button");
-const settingsDialog = document.getElementById("settings-dialog");
-const settingsCloseButton = document.getElementById("settings-close-button");
 const settingsNotice = document.getElementById("settings-account-notice");
 const accountPanel = document.getElementById("settings-account-panel");
 const signedOutPanel = document.getElementById("settings-signed-out");
@@ -70,23 +67,6 @@ function syncAccount(user) {
   passwordForm.hidden = !supportsPassword;
   passwordProviderNote.hidden = supportsPassword;
 }
-
-settingsButton.addEventListener("click", () => {
-  if (!settingsDialog.open) {
-    settingsDialog.showModal();
-  }
-});
-
-settingsCloseButton.addEventListener("click", () => settingsDialog.close());
-settingsDialog.addEventListener("click", (event) => {
-  if (event.target === settingsDialog) {
-    settingsDialog.close();
-  }
-});
-settingsDialog.addEventListener("close", () => {
-  const sidebarIsClosed = document.querySelector(".chat-workspace").classList.contains("sidebar-closed");
-  document.getElementById(sidebarIsClosed ? "sidebar-toggle-button" : "settings-button").focus();
-});
 
 profileForm.addEventListener("submit", async (event) => {
   event.preventDefault();

@@ -1,11 +1,17 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const gameContent = document.getElementById("game-content");
-  const gamePickerButtons = document.querySelectorAll(".game-picker-button");
+  const gamesMenu = document.getElementById("games-menu");
+  const gameStage = document.getElementById("game-stage");
+  const gameChoices = document.querySelectorAll("[data-start-game]");
 
-  if (!gameContent || !gamePickerButtons.length) {
+  if (!gamesMenu || !gameStage || !gameChoices.length) {
     return;
   }
 
+  const gameNames = {
+    "tic-tac-toe": "Tic-tac-toe",
+    memory: "Memory Match",
+    "quick-math": "Quick Math"
+  };
   const winningLines = [
     [0, 1, 2], [3, 4, 5], [6, 7, 8],
     [0, 3, 6], [1, 4, 7], [2, 5, 8],
@@ -28,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
     locked: false,
     mismatchTimer: null
   };
-  let activeGame = "tic-tac-toe";
+  let selectedGame = null;
   let mathRound = 1;
   let mathScore = 0;
   let mathQuestion = createMathQuestion();
@@ -73,6 +79,22 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
+  function renderGameFrame(name, status, content) {
+    gameStage.innerHTML = `
+      <div class="games-stage-actions">
+        <button class="games-back-button" type="button" data-action="back-to-games">
+          <span aria-hidden="true">←</span> All games
+        </button>
+        <button class="games-chat-button" type="button" data-app-view="chat">Back to chat</button>
+      </div>
+      <div class="game-play-card">
+        <h2 class="game-title">${name}</h2>
+        <p class="game-status">${status}</p>
+        ${content}
+      </div>
+    `;
+  }
+
   function renderTicTacToe() {
     const status = ticTacToe.status || `${ticTacToe.turn}'s turn`;
     const cells = ticTacToe.board.map((mark, index) => `
@@ -81,13 +103,10 @@ document.addEventListener("DOMContentLoaded", () => {
         aria-label="Cell ${index + 1}${mark ? `, ${mark}` : ", empty"}"
         ${mark || ticTacToe.finished ? "disabled" : ""}>${mark}</button>
     `).join("");
-
-    gameContent.innerHTML = `
-      <p class="game-title">Tic-tac-toe</p>
-      <p class="game-status">${status}</p>
+    renderGameFrame(gameNames["tic-tac-toe"], status, `
       <div class="game-board game-board-tic-tac-toe" role="group" aria-label="Tic-tac-toe board">${cells}</div>
       <button class="game-control" type="button" data-action="reset-tic-tac-toe">New round</button>
-    `;
+    `);
   }
 
   function renderMemory() {
@@ -106,13 +125,10 @@ document.addEventListener("DOMContentLoaded", () => {
         </button>
       `;
     }).join("");
-
-    gameContent.innerHTML = `
-      <p class="game-title">Memory Match</p>
-      <p class="game-status">${status}</p>
+    renderGameFrame(gameNames.memory, status, `
       <div class="game-board memory-board" role="group" aria-label="Memory Match cards">${cards}</div>
       <button class="game-control" type="button" data-action="reset-memory">Shuffle cards</button>
-    `;
+    `);
   }
 
   function renderQuickMath() {
@@ -120,42 +136,59 @@ document.addEventListener("DOMContentLoaded", () => {
       <button class="game-control math-answer" type="button" data-action="answer-math"
         data-answer="${choice}" ${mathAnswered ? "disabled" : ""}>${choice}</button>
     `).join("");
-
-    gameContent.innerHTML = `
-      <p class="game-title">Quick Math</p>
-      <p class="game-status">Round ${mathRound} · Score ${mathScore}</p>
+    renderGameFrame(gameNames["quick-math"], `Round ${mathRound} · Score ${mathScore}`, `
       <p class="math-question" aria-label="${mathQuestion.prompt}">${mathQuestion.prompt} = ?</p>
       <div class="math-answers" role="group" aria-label="Choose the answer">${answers}</div>
       <p class="math-feedback" role="status">${mathFeedback}</p>
       ${mathAnswered ? '<button class="game-control" type="button" data-action="next-math">Next question</button>' : ""}
-    `;
+    `);
   }
 
-  function renderGame() {
-    gamePickerButtons.forEach((button) => {
-      button.setAttribute("aria-pressed", String(button.dataset.game === activeGame));
-    });
+  function showGameMenu() {
+    selectedGame = null;
+    gamesMenu.hidden = false;
+    gameStage.hidden = true;
+    gameStage.replaceChildren();
+  }
 
-    if (activeGame === "tic-tac-toe") {
+  function startGame(name) {
+    if (!Object.hasOwn(gameNames, name)) {
+      return;
+    }
+    selectedGame = name;
+    gamesMenu.hidden = true;
+    gameStage.hidden = false;
+    renderSelectedGame();
+  }
+
+  function renderSelectedGame() {
+    if (selectedGame === "tic-tac-toe") {
       renderTicTacToe();
-    } else if (activeGame === "memory") {
+    } else if (selectedGame === "memory") {
       renderMemory();
-    } else {
+    } else if (selectedGame === "quick-math") {
       renderQuickMath();
     }
   }
 
-  gamePickerButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      activeGame = button.dataset.game;
-      renderGame();
-    });
+  gameChoices.forEach((button) => {
+    button.addEventListener("click", () => startGame(button.dataset.startGame));
   });
 
-  gameContent.addEventListener("click", (event) => {
+  gameStage.addEventListener("click", (event) => {
     const target = event.target instanceof Element ? event.target : null;
+    const appViewButton = target?.closest("[data-app-view]");
+    if (appViewButton) {
+      document.dispatchEvent(new CustomEvent("studymate:navigate-view", { detail: appViewButton.dataset.appView }));
+      return;
+    }
     const button = target?.closest("button[data-action]");
     if (!button) {
+      return;
+    }
+
+    if (button.dataset.action === "back-to-games") {
+      showGameMenu();
       return;
     }
 
@@ -164,7 +197,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (ticTacToe.finished || ticTacToe.board[cell]) {
         return;
       }
-
       ticTacToe.board[cell] = ticTacToe.turn;
       const winner = winningLines.some((line) => line.every((index) => ticTacToe.board[index] === ticTacToe.turn));
       if (winner) {
@@ -195,7 +227,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (memory.locked || memory.matched.has(card) || memory.flipped.includes(card)) {
         return;
       }
-
       memory.flipped.push(card);
       if (memory.flipped.length === 2) {
         if (memory.cards[memory.flipped[0]] === memory.cards[memory.flipped[1]]) {
@@ -208,7 +239,7 @@ document.addEventListener("DOMContentLoaded", () => {
             memory.flipped = [];
             memory.locked = false;
             memory.mismatchTimer = null;
-            if (activeGame === "memory") {
+            if (selectedGame === "memory") {
               renderMemory();
             }
           }, 700);
@@ -250,5 +281,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  renderGame();
+  document.addEventListener("studymate:show-view", (event) => {
+    if (event.detail === "games") {
+      showGameMenu();
+    }
+  });
+
+  showGameMenu();
 });

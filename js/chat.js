@@ -1,3 +1,5 @@
+import { isCompleteUserProfile, loadCurrentUserProfile } from "./user-profile.js";
+
 const chatEndpoint = "/api/chat";
 const topicEndpoint = "/api/topics";
 const chatHistoryStorageKey = "studymate-chat-history-v1";
@@ -45,6 +47,24 @@ document.addEventListener("DOMContentLoaded", () => {
   const chatHistoryStatus = document.getElementById("chat-history-status");
   const activitySaveStatus = document.getElementById("activity-save-status");
   const topicTrackingStatus = document.getElementById("topic-tracking-status");
+  let studentProfile = null;
+  const profileReady = loadCurrentUserProfile().then((account) => {
+    if (account && !isCompleteUserProfile(account.profile)) {
+      window.location.replace("/account");
+      return false;
+    }
+    studentProfile = account?.profile || null;
+    return true;
+  }).catch((error) => {
+    console.error("Could not load the current user's study profile.", error);
+    activitySaveStatus.textContent = `Could not load your profile: ${error.message}`;
+    return false;
+  });
+  window.addEventListener("studymate-profile-updated", (event) => {
+    if (isCompleteUserProfile(event.detail)) {
+      studentProfile = event.detail;
+    }
+  });
   let conversation = [];
   let chatSessions = [];
   let activeChatId = null;
@@ -731,6 +751,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function sendQuestion(question, image = null) {
+    if (!await profileReady) {
+      return;
+    }
     if (isSending) {
       return;
     }
@@ -760,6 +783,7 @@ document.addEventListener("DOMContentLoaded", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [...requestHistory, { role: "user", content: messageText, ...(image ? { image: image.dataUrl } : {}) }],
+          ...(studentProfile ? { studentProfile } : {})
         }),
       });
 

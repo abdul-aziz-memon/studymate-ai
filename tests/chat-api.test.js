@@ -44,11 +44,14 @@ test("accepts assistant history longer than the user-message limit", async (t) =
       { role: "user", content: "Explain linear equations." },
       { role: "assistant", content: "x".repeat(5000) },
       { role: "user", content: "Can you explain that another way?" }
-    ]
+    ],
+    studentProfile: { displayName: "Alex", grade: "Grade 9" }
   }, response);
 
   assert.equal(response.statusCode, 200);
-  assert.equal(upstreamBody.messages[2].content.length, 5000);
+  assert.equal(upstreamBody.messages[3].content.length, 5000);
+  assert.match(upstreamBody.messages[1].content, /Alex/);
+  assert.match(upstreamBody.messages[1].content, /Grade 9/);
 });
 
 test("keeps the user-message length limit with a specific error", async () => {
@@ -59,4 +62,15 @@ test("keeps the user-message length limit with a specific error", async () => {
 
   assert.equal(response.statusCode, 400);
   assert.deepEqual(response.data, { error: "A user message must be 4,000 characters or fewer." });
+});
+
+test("rejects unsupported student profile grades", async () => {
+  const response = createResponse();
+  await handleChatBody({
+    messages: [{ role: "user", content: "Help me study." }],
+    studentProfile: { displayName: "Alex", grade: "University" }
+  }, response);
+
+  assert.equal(response.statusCode, 400);
+  assert.deepEqual(response.data, { error: "The student profile is invalid. Add a display name and a grade from 1 to 12." });
 });

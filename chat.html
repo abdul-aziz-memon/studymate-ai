@@ -204,11 +204,28 @@
             </div>
 
             <form id="profile-form" class="settings-form">
-              <h3>Display name</h3>
-              <label for="settings-display-name">Your name</label>
+              <h3>Study profile</h3>
+              <label for="settings-display-name">Display name (shown on leaderboards)</label>
               <input id="settings-display-name" name="displayName" type="text" autocomplete="name" minlength="2" maxlength="80" required>
+              <label for="settings-grade">Grade (private)</label>
+              <select id="settings-grade" name="grade" required>
+                <option value="">Choose your grade</option>
+                <option value="Grade 1">Grade 1</option>
+                <option value="Grade 2">Grade 2</option>
+                <option value="Grade 3">Grade 3</option>
+                <option value="Grade 4">Grade 4</option>
+                <option value="Grade 5">Grade 5</option>
+                <option value="Grade 6">Grade 6</option>
+                <option value="Grade 7">Grade 7</option>
+                <option value="Grade 8">Grade 8</option>
+                <option value="Grade 9">Grade 9</option>
+                <option value="Grade 10">Grade 10</option>
+                <option value="Grade 11">Grade 11</option>
+                <option value="Grade 12">Grade 12</option>
+              </select>
+              <p class="settings-note">Your grade is stored privately and helps StudyMate tailor explanations.</p>
               <p id="profile-feedback" class="settings-feedback" role="status" aria-live="polite"></p>
-              <button class="settings-primary-button" type="submit">Save name</button>
+              <button class="settings-primary-button" type="submit">Save profile</button>
             </form>
 
             <section id="password-settings" class="settings-form">

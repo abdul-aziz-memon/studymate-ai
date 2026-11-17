@@ -8,6 +8,7 @@ import {
   updateProfile
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { auth } from "./firebase.js";
+import { getUserProfile, isCompleteUserProfile } from "./user-profile.js";
 
 const form = document.getElementById("auth-form");
 const nameGroup = document.getElementById("name-group");
@@ -23,6 +24,7 @@ const title = document.getElementById("form-title");
 const intro = document.getElementById("form-intro");
 let mode = document.body.dataset.authMode === "signup" ? "signup" : "login";
 let isSubmitting = false;
+let redirecting = false;
 
 function showMessage(text, kind = "error") {
   message.textContent = text;
@@ -78,6 +80,20 @@ function setBusy(isBusy) {
   }
 }
 
+async function routeAuthenticatedUser(user) {
+  if (redirecting) {
+    return;
+  }
+  redirecting = true;
+  try {
+    const profile = await getUserProfile(user);
+    window.location.replace(isCompleteUserProfile(profile) ? "/dashboard.html" : "/account");
+  } catch (error) {
+    redirecting = false;
+    showMessage(`Could not load your profile: ${error.message}`);
+  }
+}
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!form.reportValidity()) {
@@ -95,13 +111,16 @@ form.addEventListener("submit", async (event) => {
   showMessage("");
 
   try {
+    let user;
     if (mode === "signup") {
       const credential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(credential.user, { displayName: displayNameInput.value.trim() });
+      user = credential.user;
     } else {
-      await signInWithEmailAndPassword(auth, email, password);
+      const credential = await signInWithEmailAndPassword(auth, email, password);
+      user = credential.user;
     }
-    window.location.replace("dashboard.html");
+    await routeAuthenticatedUser(user);
   } catch (error) {
     showMessage(getErrorMessage(error));
   } finally {
@@ -120,8 +139,8 @@ googleButton?.addEventListener("click", async () => {
   setBusy(true);
   showMessage("");
   try {
-    await signInWithPopup(auth, new GoogleAuthProvider());
-    window.location.replace("dashboard.html");
+    const credential = await signInWithPopup(auth, new GoogleAuthProvider());
+    await routeAuthenticatedUser(credential.user);
   } catch (error) {
     showMessage(getErrorMessage(error));
   } finally {
@@ -155,7 +174,7 @@ resetButton?.addEventListener("click", async () => {
 if (auth) {
   onAuthStateChanged(auth, (user) => {
     if (user && !isSubmitting) {
-      window.location.replace("dashboard.html");
+      void routeAuthenticatedUser(user);
     }
   });
 } else {

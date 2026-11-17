@@ -3,10 +3,10 @@ import {
   onAuthStateChanged,
   reauthenticateWithCredential,
   signOut,
-  updatePassword,
-  updateProfile
+  updatePassword
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { auth } from "./firebase.js";
+import { getUserProfile, isCompleteUserProfile, saveUserProfile } from "./user-profile.js";
 
 const settingsNotice = document.getElementById("settings-account-notice");
 const accountPanel = document.getElementById("settings-account-panel");
@@ -16,6 +16,7 @@ const accountEmail = document.getElementById("settings-account-email");
 const accountAvatar = document.getElementById("settings-account-avatar");
 const profileForm = document.getElementById("profile-form");
 const displayNameInput = document.getElementById("settings-display-name");
+const gradeInput = document.getElementById("settings-grade");
 const profileFeedback = document.getElementById("profile-feedback");
 const passwordForm = document.getElementById("password-form");
 const passwordFormContainer = document.getElementById("password-settings");
@@ -39,12 +40,12 @@ function getErrorMessage(error) {
 }
 
 function setFormBusy(form, busy) {
-  form.querySelectorAll("input, button").forEach((control) => {
+  form.querySelectorAll("input, select, button").forEach((control) => {
     control.disabled = busy;
   });
 }
 
-function syncAccount(user) {
+async function syncAccount(user) {
   currentUser = user;
   accountPanel.hidden = !user;
   signedOutPanel.hidden = Boolean(user);
@@ -57,15 +58,26 @@ function syncAccount(user) {
     return;
   }
 
-  const name = user.displayName?.trim() || "StudyMate learner";
-  accountName.textContent = name;
-  accountEmail.textContent = user.email || "Email unavailable";
-  accountAvatar.textContent = name.charAt(0).toUpperCase() || "S";
-  displayNameInput.value = user.displayName || "";
+  try {
+    const profile = await getUserProfile(user);
+    if (!isCompleteUserProfile(profile)) {
+      window.location.replace("/account");
+      return;
+    }
 
-  const supportsPassword = user.providerData.some((provider) => provider.providerId === "password");
-  passwordForm.hidden = !supportsPassword;
-  passwordProviderNote.hidden = supportsPassword;
+    const name = profile.displayName;
+    accountName.textContent = name;
+    accountEmail.textContent = user.email || "Email unavailable";
+    accountAvatar.textContent = name.charAt(0).toUpperCase() || "S";
+    displayNameInput.value = name;
+    gradeInput.value = profile.grade;
+
+    const supportsPassword = user.providerData.some((provider) => provider.providerId === "password");
+    passwordForm.hidden = !supportsPassword;
+    passwordProviderNote.hidden = supportsPassword;
+  } catch (error) {
+    settingsNotice.textContent = `Could not load your profile: ${error.message}`;
+  }
 }
 
 profileForm.addEventListener("submit", async (event) => {
@@ -78,12 +90,13 @@ profileForm.addEventListener("submit", async (event) => {
   setFormBusy(profileForm, true);
   profileFeedback.textContent = "";
   try {
-    await updateProfile(currentUser, { displayName: name });
+    const profile = await saveUserProfile(currentUser, name, gradeInput.value);
     accountName.textContent = name;
     accountAvatar.textContent = name.charAt(0).toUpperCase();
-    profileFeedback.textContent = "Your name has been updated.";
+    gradeInput.value = profile.grade;
+    profileFeedback.textContent = "Your display name and grade have been updated.";
   } catch (error) {
-    profileFeedback.textContent = getErrorMessage(error);
+    profileFeedback.textContent = error.code ? getErrorMessage(error) : error.message;
   } finally {
     setFormBusy(profileForm, false);
   }

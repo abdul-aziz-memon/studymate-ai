@@ -6,6 +6,7 @@ import {
   loadLeaderboardEntries,
   updateLeaderboardEntry
 } from "./activity.js";
+import { getUserProfile, isCompleteUserProfile } from "./user-profile.js";
 
 const accountName = document.getElementById("account-name");
 const accountEmail = document.getElementById("account-email");
@@ -224,7 +225,20 @@ if (!auth) {
       return;
     }
 
-    const name = user.displayName?.trim() || "learner";
+    let profile;
+    try {
+      profile = await getUserProfile(user);
+    } catch (error) {
+      console.error("Could not load the current user's study profile.", error);
+      message.textContent = `Could not load your profile: ${error.message}`;
+      return;
+    }
+    if (!isCompleteUserProfile(profile)) {
+      window.location.replace("/account");
+      return;
+    }
+
+    const name = profile.displayName;
     const initial = name.charAt(0).toUpperCase() || "S";
     accountName.textContent = name;
     accountEmail.textContent = user.email || "";

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8fafc">
+  <meta name="description" content="Set up your StudyMate AI learning profile.">
+  <title>Your study profile — StudyMate AI</title>
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/auth.css">
+  <script type="module" src="js/account.js"></script>
+</head>
+<body>
+  <main class="auth-shell">
+    <section class="study-side" aria-labelledby="study-title">
+      <a class="wordmark" href="index.html" aria-label="StudyMate AI home">
+        <img class="wordmark-mark" src="images/studymateai-logo.webp" alt="" aria-hidden="true" width="36" height="36" decoding="async">
+        <span>StudyMate <b>AI</b></span>
+      </a>
+      <div class="study-copy">
+        <p class="eyebrow">YOUR STUDY SPACE</p>
+        <h1 id="study-title">Learning that meets you <em>where you are.</em></h1>
+        <p class="study-description">Set your name and grade so StudyMate can make explanations feel right for you.</p>
+      </div>
+      <p class="side-note">A little progress, every day.</p>
+    </section>
+
+    <section class="form-side" aria-labelledby="account-title">
+      <div class="form-wrap">
+        <a class="mobile-wordmark" href="index.html" aria-label="StudyMate AI home">
+          <img class="wordmark-mark" src="images/studymateai-logo.webp" alt="" aria-hidden="true" width="36" height="36" decoding="async">
+          StudyMate <b>AI</b>
+        </a>
+        <p class="eyebrow form-eyebrow">ONE-TIME SETUP</p>
+        <h2 id="account-title">Set up your study profile</h2>
+        <p class="form-intro">Your display name appears on signed-in leaderboards. Your grade stays private and helps tailor AI explanations.</p>
+
+        <form id="account-form" hidden>
+          <div class="field-group">
+            <label for="account-display-name">Display name</label>
+            <input id="account-display-name" name="displayName" type="text" autocomplete="name" minlength="2" maxlength="80" required>
+          </div>
+          <div class="field-group">
+            <label for="account-grade">Grade</label>
+            <select id="account-grade" name="grade" required>
+              <option value="">Choose your grade</option>
+              <option value="Grade 1">Grade 1</option>
+              <option value="Grade 2">Grade 2</option>
+              <option value="Grade 3">Grade 3</option>
+              <option value="Grade 4">Grade 4</option>
+              <option value="Grade 5">Grade 5</option>
+              <option value="Grade 6">Grade 6</option>
+              <option value="Grade 7">Grade 7</option>
+              <option value="Grade 8">Grade 8</option>
+              <option value="Grade 9">Grade 9</option>
+              <option value="Grade 10">Grade 10</option>
+              <option value="Grade 11">Grade 11</option>
+              <option value="Grade 12">Grade 12</option>
+            </select>
+          </div>
+          <p id="account-message" class="form-message" role="status" aria-live="polite"></p>
+          <button class="submit-button" id="account-submit" type="submit">
+            <span>Save profile</span>
+            <span class="submit-arrow" aria-hidden="true">&#8594;</span>
+          </button>
+        </form>
+        <p id="account-loading" class="form-message" role="status" aria-live="polite">Checking your account...</p>
+      </div>
+      <footer class="form-footer">StudyMate AI <span>·</span> Keep learning at your pace.</footer>
+    </section>
+  </main>
+</body>
+</html>

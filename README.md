@@ -23,6 +23,8 @@ AI can make mistakes, even when it sounds confident. Check important facts, calc
 | --- | --- |
 | [`index.html`](index.html) | Project introduction and links to the app. |
 | [`chat.html`](chat.html) | Study chat, image attachment, and formatted answers. |
+| [`account.html`](account.html) | Required display-name and grade setup for signed-in users. |
+| [`dashboard.html`](dashboard.html) | Personal activity, topics, and all-time leaderboards. |
 | [`creators.html`](creators.html) | Information about the creator. |
 
 ## Deploy on Vercel ☁️
@@ -49,7 +51,7 @@ The function reads `process.env.GROQ_API_KEY` directly. It does not read `.env` 
 
 ### Enable Firestore activity tracking
 
-Create a Cloud Firestore database in the Firebase console and publish the rules in [`firestore.rules`](firestore.rules). The rules let signed-in users access only their own activity records under `users/{userId}/activity` and topic labels under `users/{userId}/topics`. Signed-in users can read the summary documents in `leaderboard` to see all-time rankings; each user can write only their own summary, which is refreshed when they open the dashboard. Activity records store game results and timing, plus chat message counts and timing; chat text and attached images are not included. Topic labels are saved for signed-in users and shown on their dashboard. Guest chats are not tracked.
+Create a Cloud Firestore database in the Firebase console and publish the rules in [`firestore.rules`](firestore.rules). The rules let signed-in users access only their own profile at `users/{userId}`, activity records under `users/{userId}/activity`, and topic labels under `users/{userId}/topics`. Signed-in users can read the summary documents in `leaderboard` to see all-time rankings; each user can write only their own summary, which is refreshed when they open the dashboard. Activity records store game results and timing, plus chat message counts and timing; chat text and attached images are not included. Topic labels are saved for signed-in users and shown on their dashboard. Guest chats are not tracked.
 
 ### 3. Deploy the current commit
 
@@ -66,19 +68,20 @@ If you still see a message saying requests are only accepted from this computer,
 
 ## How chat works
 
-1. `js/chat.js` sends the current conversation and any attached study image to `POST /api/chat`.
-2. Vercel routes that request to `api/chat.js`.
-3. `api/chat.js` checks the HTTP method and JSON body, then sends the chat request to `lib/chat-api.js`.
-4. `lib/chat-api.js` validates messages and attached images, then sends the request to Groq.
-5. After a successful reply, `js/chat.js` starts a background topic check through `POST /api/topics` for signed-in users.
-6. `api/topics.js` validates the request, and `lib/topic-api.js` asks Groq to match the conversation to an existing topic or return a new concise label.
-7. `js/activity.js` saves only new topic labels and signed-in users' game/chat activity to their private Firestore records.
+1. `js/user-profile.js` loads the signed-in user's private display name and grade from Firestore; incomplete profiles are sent to `/account`.
+2. `js/chat.js` sends the current conversation, optional study image, and profile context to `POST /api/chat`.
+3. Vercel routes that request to `api/chat.js`.
+4. `api/chat.js` checks the HTTP method and JSON body, then sends the chat request to `lib/chat-api.js`.
+5. `lib/chat-api.js` validates messages and profile data, then sends the request to Groq with instructions to tailor explanations to the student's grade.
+6. After a successful reply, `js/chat.js` starts a background topic check through `POST /api/topics` for signed-in users.
+7. `api/topics.js` validates the request, and `lib/topic-api.js` asks Groq to match the conversation to an existing topic or return a new concise label.
+8. `js/activity.js` saves only new topic labels and signed-in users' game/chat activity to their private Firestore records.
 
 The function accepts up to 40 messages, limits user messages to 4,000 characters and assistant history messages to 16,000 characters, and validates image uploads. Images are limited to 4 MB and supported formats are PNG, JPEG, and WebP. The function is configured for a maximum duration of 60 seconds, subject to the project’s Vercel plan limits.
 
 ### Privacy and usage
 
-The deployed chat and topic-check endpoints are public. For signed-in users, each successful answer triggers an additional Groq request in the background using up to six recent text messages and existing topic labels; image attachments are not included in this topic-check request. Only newly identified topic labels are saved to Firestore. Messages and attached images are sent to Groq to generate answers. Leaderboards show account display names and scores to signed-in users; scores are summaries computed in the browser from the user's activity records and are not tamper-proof. Do not send passwords, sensitive personal information, or other private material. Check your Groq account’s usage limits and Vercel traffic controls to help prevent unexpected usage.
+The deployed chat and topic-check endpoints are public. For signed-in users, chat requests include their display name and grade so Groq can personalize explanations; the grade is stored in the user's private Firestore profile and is not shown on leaderboards. Each successful answer also triggers an additional Groq request in the background using up to six recent text messages and existing topic labels; image attachments are not included in this topic-check request. Only newly identified topic labels are saved to Firestore. Messages and attached images are sent to Groq to generate answers. Leaderboards show account display names and scores to signed-in users; scores are summaries computed in the browser from the user's activity records and are not tamper-proof. Do not send passwords, sensitive personal information, or other private material. Check your Groq account’s usage limits and Vercel traffic controls to help prevent unexpected usage.
 
 ## Project structure 🗂️
 
@@ -86,6 +89,7 @@ The deployed chat and topic-check endpoints are public. For signed-in users, eac
 studymate-ai/
 ├── index.html           # Landing page
 ├── chat.html            # Chat interface
+├── account.html         # Required student profile setup
 ├── creators.html        # Creator information
 ├── api/
 │   ├── chat.js          # Vercel serverless endpoint: POST /api/chat
@@ -108,6 +112,8 @@ studymate-ai/
 │   └── themes.css       # Shared theme styles and controls
 └── js/
     ├── activity.js      # Firebase topic, game, and chat activity records
+    ├── user-profile.js  # Private display-name and grade profile
+    ├── account.js       # Required profile setup flow
     ├── chat.js          # Chat UI, image preparation, and background topic checks
     ├── dashboard.js     # Firebase-backed activity and leaderboard dashboard
     ├── firebase.js      # Shared Firebase Auth and Firestore setup
@@ -122,6 +128,8 @@ studymate-ai/
 - **`lib/chat-api.js`** holds the chat validation, Groq API request, and upstream error handling shared by the function.
 - **`lib/topic-api.js`** validates topic-check requests and asks Groq to identify or match a study topic.
 - **`js/activity.js`** stores signed-in users' topic labels, game results, and chat counts/timing in Firestore.
+- **`js/user-profile.js`** stores and validates each user's private display name and Grade 1–12 profile.
+- **`account.html`** and **`js/account.js`** provide required profile setup for new accounts and existing accounts missing profile data.
 - **`js/dashboard.js`** refreshes each signed-in user's all-time leaderboard summary and renders the games and topics rankings.
 - **`firestore.rules`** restricts activity and topic access to each record's owning Firebase user.
 - **`tests/topic-api.test.js`** covers topic request validation and model-response parsing; run it with `npm run test:topics`.

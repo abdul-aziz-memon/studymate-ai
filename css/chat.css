@@ -1198,7 +1198,8 @@ body {
   font-weight: 600;
 }
 
-.settings-form input {
+.settings-form input,
+.settings-form select {
   width: 100%;
   min-height: 42px;
   border: 1px solid #cbd5e1;
@@ -1210,7 +1211,8 @@ body {
   font-size: 0.85rem;
 }
 
-.settings-form input:focus {
+.settings-form input:focus,
+.settings-form select:focus {
   border-color: var(--theme-primary);
   outline: 3px solid var(--theme-soft);
 }

@@ -65,6 +65,25 @@ service cloud.firestore {
         && data.topicCount <= 1000000;
     }
 
+    function validUserProfile(data) {
+      return data.keys().hasOnly(['displayName', 'grade', 'updatedAtMs'])
+        && data.keys().hasAll(['displayName', 'grade', 'updatedAtMs'])
+        && data.displayName is string
+        && data.displayName.size() >= 2
+        && data.displayName.size() <= 80
+        && data.grade in [
+          'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6',
+          'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'
+        ]
+        && data.updatedAtMs is int;
+    }
+
+    match /users/{userId} {
+      allow read, delete: if ownsActivity(userId);
+      allow create, update: if ownsActivity(userId)
+        && validUserProfile(request.resource.data);
+    }
+
     match /users/{userId}/activity/{activityId} {
       allow read, delete: if ownsActivity(userId);
       allow create, update: if ownsActivity(userId)

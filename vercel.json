@@ -8,5 +8,11 @@
     "api/topics.js": {
       "maxDuration": 20
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/account",
+      "destination": "/account.html"
+    }
+  ]
 }

@@ -5,7 +5,8 @@
     "build:css": "tailwindcss -i ./css/tailwind.input.css -o ./css/tailwind.css --minify && npm run build:homepage-css",
     "build:homepage-css": "node scripts/build-homepage-css.js",
     "watch:css": "tailwindcss -i ./css/tailwind.input.css -o ./css/tailwind.css --watch",
-    "test:topics": "node --test tests/topic-api.test.js"
+    "test:topics": "node --test tests/topic-api.test.js",
+    "test:chat": "node --test tests/chat-api.test.js"
   },
   "devDependencies": {
     "tailwindcss": "^3.4.17"

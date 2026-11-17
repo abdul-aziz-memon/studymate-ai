@@ -74,7 +74,7 @@ If you still see a message saying requests are only accepted from this computer,
 6. `api/topics.js` validates the request, and `lib/topic-api.js` asks Groq to match the conversation to an existing topic or return a new concise label.
 7. `js/activity.js` saves only new topic labels and signed-in users' game/chat activity to their private Firestore records.
 
-The function accepts up to 40 messages, limits each message to 4,000 characters, and validates image uploads. Images are limited to 4 MB and supported formats are PNG, JPEG, and WebP. The function is configured for a maximum duration of 60 seconds, subject to the project’s Vercel plan limits.
+The function accepts up to 40 messages, limits user messages to 4,000 characters and assistant history messages to 16,000 characters, and validates image uploads. Images are limited to 4 MB and supported formats are PNG, JPEG, and WebP. The function is configured for a maximum duration of 60 seconds, subject to the project’s Vercel plan limits.
 
 ### Privacy and usage
 

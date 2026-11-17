@@ -89,6 +89,7 @@ a {
   color: #fff;
   font-size: 21px;
   font-weight: 400;
+  object-fit: cover;
 }
 
 .study-copy {

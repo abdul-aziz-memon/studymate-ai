@@ -12,6 +12,7 @@ StudyMate AI helps students explore tricky topics with clear, encouraging explan
 - Accept PNG, JPEG, and WebP images to ask about diagrams or written problems.
 - Format responses with Markdown, code blocks, tables, and mathematical notation.
 - Keep recent messages in the current browser session for follow-up questions.
+- Track newly covered study topics on signed-in users' dashboards.
 - Provide sample questions to help start a study session.
 
 AI can make mistakes, even when it sounds confident. Check important facts, calculations, and citations against your course materials.
@@ -48,7 +49,7 @@ The function reads `process.env.GROQ_API_KEY` directly. It does not read `.env` 
 
 ### Enable Firestore activity tracking
 
-Create a Cloud Firestore database in the Firebase console and publish the rules in [`firestore.rules`](firestore.rules). The rules let signed-in users access only their own activity records under `users/{userId}/activity`. Activity records store game results and timing, plus chat message counts and timing; chat text and attached images are not included. Users need to be signed in for their activity to sync to the dashboard.
+Create a Cloud Firestore database in the Firebase console and publish the rules in [`firestore.rules`](firestore.rules). The rules let signed-in users access only their own activity records under `users/{userId}/activity` and topic labels under `users/{userId}/topics`. Activity records store game results and timing, plus chat message counts and timing; chat text and attached images are not included. Topic labels are saved for signed-in users and shown on their dashboard. Guest chats are not tracked.
 
 ### 3. Deploy the current commit
 
@@ -58,6 +59,7 @@ Push the changes to the Git branch connected to Vercel, then wait for a **new de
 
 - Open the new deployment and verify the homepage loads.
 - Open `/api/chat` in a browser. A `405` response saying “Use POST to send a chat message” is expected for a browser GET; it confirms Vercel routed the request to the function.
+- Open `/api/topics` in a browser. A `405` response saying “Use POST to check a study topic” is expected for a browser GET.
 - Try a question in the chat. If the function responds that `GROQ_API_KEY` is not configured, check that the variable was saved for that deployment’s environment and redeploy.
 
 If you still see a message saying requests are only accepted from this computer, you are not receiving this version of the code. That response came from the removed local server. In Vercel, check **Deployments** and confirm the URL points to the latest deployment built from the commit containing `api/chat.js` and `vercel.json`. Also confirm the project’s Root Directory is correct and that the deployment succeeded.
@@ -68,14 +70,15 @@ If you still see a message saying requests are only accepted from this computer,
 2. Vercel routes that request to `api/chat.js`.
 3. `api/chat.js` checks the HTTP method and JSON body, then sends the chat request to `lib/chat-api.js`.
 4. `lib/chat-api.js` validates messages and attached images, then sends the request to Groq.
-5. `js/activity.js` saves signed-in users' game and chat activity to their private Firestore records for the dashboard.
-6. The function returns the answer to the browser.
+5. After a successful reply, `js/chat.js` starts a background topic check through `POST /api/topics` for signed-in users.
+6. `api/topics.js` validates the request, and `lib/topic-api.js` asks Groq to match the conversation to an existing topic or return a new concise label.
+7. `js/activity.js` saves only new topic labels and signed-in users' game/chat activity to their private Firestore records.
 
 The function accepts up to 40 messages, limits each message to 4,000 characters, and validates image uploads. Images are limited to 4 MB and supported formats are PNG, JPEG, and WebP. The function is configured for a maximum duration of 60 seconds, subject to the project’s Vercel plan limits.
 
 ### Privacy and usage
 
-The deployed chat endpoint is public. Messages and attached images are sent to Groq to generate answers. Do not send passwords, sensitive personal information, or other private material. Check your Groq account’s usage limits and Vercel traffic controls to help prevent unexpected usage.
+The deployed chat and topic-check endpoints are public. For signed-in users, each successful answer triggers an additional Groq request in the background using up to six recent text messages and existing topic labels; image attachments are not included in this topic-check request. Only newly identified topic labels are saved to Firestore. Messages and attached images are sent to Groq to generate answers. Do not send passwords, sensitive personal information, or other private material. Check your Groq account’s usage limits and Vercel traffic controls to help prevent unexpected usage.
 
 ## Project structure 🗂️
 
@@ -85,10 +88,14 @@ studymate-ai/
 ├── chat.html            # Chat interface
 ├── creators.html        # Creator information
 ├── api/
-│   └── chat.js          # Vercel serverless endpoint: POST /api/chat
+│   ├── chat.js          # Vercel serverless endpoint: POST /api/chat
+│   └── topics.js        # Background topic classification endpoint
 ├── firestore.rules      # Firestore rules for private user activity
+├── tests/
+│   └── topic-api.test.js # Topic API validation and response tests
 ├── lib/
-│   └── chat-api.js      # Shared validation and Groq request handling
+│   ├── chat-api.js      # Chat validation and Groq request handling
+│   └── topic-api.js     # Topic validation and classification
 ├── vercel.json          # Vercel Function configuration
 ├── contribute.md        # Contribution guidelines
 ├── LICENSE              # Project license
@@ -96,12 +103,12 @@ studymate-ai/
 │   ├── homepage.bundle.css # Combined landing-page styles
 │   ├── homepage.css     # Landing page styles
 │   ├── chat.css         # Chat and answer styles
-│   ├── dashboard.css    # Dashboard and activity-history styles
+│   ├── dashboard.css    # Dashboard, topic list, and activity-history styles
 │   ├── creators.css     # Creators page styles
 │   └── themes.css       # Shared theme styles and controls
 └── js/
-    ├── activity.js      # Firebase game and chat activity records
-    ├── chat.js          # Chat UI, image preparation, and rendering
+    ├── activity.js      # Firebase topic, game, and chat activity records
+    ├── chat.js          # Chat UI, image preparation, and background topic checks
     ├── dashboard.js     # Firebase-backed activity dashboard
     ├── firebase.js      # Shared Firebase Auth and Firestore setup
     ├── games.js         # Games and game activity tracking
@@ -111,9 +118,12 @@ studymate-ai/
 ### Main implementation files
 
 - **`api/chat.js`** is the Vercel Function. It accepts JSON `POST` requests at `/api/chat` and returns JSON responses.
+- **`api/topics.js`** accepts background topic-classification requests for signed-in chat users.
 - **`lib/chat-api.js`** holds the chat validation, Groq API request, and upstream error handling shared by the function.
-- **`js/activity.js`** stores signed-in users' game results and chat counts/timing in Firestore.
-- **`firestore.rules`** restricts activity access to its owning Firebase user.
+- **`lib/topic-api.js`** validates topic-check requests and asks Groq to identify or match a study topic.
+- **`js/activity.js`** stores signed-in users' topic labels, game results, and chat counts/timing in Firestore.
+- **`firestore.rules`** restricts activity and topic access to each record's owning Firebase user.
+- **`tests/topic-api.test.js`** covers topic request validation and model-response parsing; run it with `npm run test:topics`.
 - **`vercel.json`** configures the chat function’s maximum duration.
 - **`js/chat.js`** handles the browser chat, prompt buttons, image preparation, and response formatting.
 - **`chat.html`** defines the chat form and message area.

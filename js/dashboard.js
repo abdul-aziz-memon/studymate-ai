@@ -1,6 +1,6 @@
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { auth } from "./firebase.js";
-import { loadActivityRecords } from "./activity.js";
+import { loadActivityRecords, loadCoveredTopics } from "./activity.js";
 
 const accountName = document.getElementById("account-name");
 const accountEmail = document.getElementById("account-email");
@@ -10,6 +10,9 @@ const logoutButton = document.getElementById("logout-button");
 const message = document.getElementById("dashboard-message");
 const activityList = document.getElementById("activity-list");
 const activityEmpty = document.getElementById("activity-empty");
+const topicsList = document.getElementById("topics-list");
+const topicsEmpty = document.getElementById("topics-empty");
+const topicsMessage = document.getElementById("topics-message");
 
 function formatDate(timestamp) {
   if (!Number.isFinite(timestamp)) {
@@ -140,6 +143,30 @@ function renderActivity(records) {
   });
 }
 
+function renderCoveredTopics(topics) {
+  topicsList.replaceChildren();
+  topicsEmpty.hidden = topics.length > 0;
+
+  topics.forEach((topic, index) => {
+    const row = document.createElement("li");
+    row.className = "topic-row";
+    const mark = document.createElement("span");
+    mark.className = `topic-mark topic-mark-${["blue", "rose", "gold"][index % 3]}`;
+    mark.setAttribute("aria-hidden", "true");
+    mark.textContent = topic.title.split(/\s+/).slice(0, 2).map((word) => word.charAt(0)).join("").toUpperCase();
+
+    const copy = document.createElement("span");
+    copy.className = "topic-copy";
+    const title = document.createElement("strong");
+    title.textContent = topic.title;
+    const date = document.createElement("small");
+    date.textContent = `Covered ${formatDate(topic.coveredAtMs)}`;
+    copy.append(title, date);
+    row.append(mark, copy);
+    topicsList.append(row);
+  });
+}
+
 if (!auth) {
   window.location.replace("login.html");
 } else {
@@ -157,12 +184,23 @@ if (!auth) {
     welcomeName.textContent = name;
 
     message.textContent = "Loading your activity...";
-    try {
-      renderActivity(await loadActivityRecords());
+    const [activityResult, topicsResult] = await Promise.allSettled([
+      loadActivityRecords(),
+      loadCoveredTopics()
+    ]);
+    if (activityResult.status === "fulfilled") {
+      renderActivity(activityResult.value);
       message.textContent = "";
-    } catch (error) {
-      console.error("Could not load dashboard activity.", error);
-      message.textContent = `Could not load activity: ${error.message}`;
+    } else {
+      console.error("Could not load dashboard activity.", activityResult.reason);
+      message.textContent = `Could not load activity: ${activityResult.reason.message}`;
+    }
+    if (topicsResult.status === "fulfilled") {
+      renderCoveredTopics(topicsResult.value);
+      topicsMessage.textContent = "";
+    } else {
+      console.error("Could not load covered topics.", topicsResult.reason);
+      topicsMessage.textContent = `Could not load topics: ${topicsResult.reason.message}`;
     }
   }, (error) => {
     console.error("Could not check the current authentication state.", error);

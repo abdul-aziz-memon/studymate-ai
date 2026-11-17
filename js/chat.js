@@ -1,4 +1,5 @@
 const chatEndpoint = "/api/chat";
+const topicEndpoint = "/api/topics";
 const chatHistoryStorageKey = "studymate-chat-history-v1";
 const activityApiPromise = import("./activity.js").then(
   (activity) => ({ activity }),
@@ -7,6 +8,10 @@ const activityApiPromise = import("./activity.js").then(
 
 function createActivityId() {
   return crypto.randomUUID();
+}
+
+function normalizeTopicTitle(title) {
+  return title.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim().replace(/\s+/g, " ");
 }
 
 async function saveActivityRecord(activityId, record) {
@@ -39,6 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const chatHistoryEmpty = document.getElementById("chat-history-empty");
   const chatHistoryStatus = document.getElementById("chat-history-status");
   const activitySaveStatus = document.getElementById("activity-save-status");
+  const topicTrackingStatus = document.getElementById("topic-tracking-status");
   let conversation = [];
   let chatSessions = [];
   let activeChatId = null;
@@ -58,6 +64,10 @@ document.addEventListener("DOMContentLoaded", () => {
   let messagesAnswered = 0;
   let messagesFailed = 0;
   let activityWriteQueue = Promise.resolve();
+  let topicCheckQueue = Promise.resolve();
+  let coveredTopics = null;
+  let coveredTopicsUserId = null;
+  let topicStatusTimer = null;
   let lastActivitySnapshot = "";
   const maxImageBytes = 4 * 1024 * 1024;
   const maxEncodedImageBytes = 1536 * 1024;
@@ -98,6 +108,80 @@ document.addEventListener("DOMContentLoaded", () => {
       activityTrackingEnabled = false;
       console.error("Could not save chat activity.", error);
       activitySaveStatus.textContent = error.message || "Could not save chat activity to your dashboard.";
+    });
+  }
+
+  function setTopicTrackingStatus(message, clearAfterMs = 0) {
+    window.clearTimeout(topicStatusTimer);
+    topicTrackingStatus.textContent = message;
+    if (clearAfterMs) {
+      topicStatusTimer = window.setTimeout(() => {
+        topicTrackingStatus.textContent = "";
+      }, clearAfterMs);
+    }
+  }
+
+  function checkCoveredTopicInBackground(messages) {
+    const context = messages
+      .filter(({ role, content }) => ["user", "assistant"].includes(role) && typeof content === "string")
+      .slice(-6)
+      .map(({ role, content }) => ({ role, content: content.slice(0, 1200) }));
+    if (!context.length) {
+      return;
+    }
+
+    topicCheckQueue = topicCheckQueue.catch(() => {}).then(async () => {
+      const { activity, error } = await activityApiPromise;
+      if (error) {
+        throw new Error("Topic tracking could not load from Firebase. Refresh the page to try again.");
+      }
+
+      const user = await activity.getCurrentUser();
+      if (!user) {
+        coveredTopics = null;
+        coveredTopicsUserId = null;
+        return;
+      }
+      if (coveredTopicsUserId !== user.uid) {
+        coveredTopics = await activity.loadCoveredTopics();
+        coveredTopicsUserId = user.uid;
+      }
+
+      setTopicTrackingStatus("Checking Topics covered...");
+      const response = await fetch(topicEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: context,
+          existingTopics: coveredTopics.slice(0, 100).map(({ title }) => title)
+        })
+      });
+
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error("The topic service returned an unreadable response.");
+      }
+      if (!response.ok) {
+        throw new Error(data?.error || "Could not check Topics covered.");
+      }
+      if (data.topic !== null && typeof data.topic !== "string") {
+        throw new Error("The topic service returned an invalid topic.");
+      }
+
+      const title = data.topic?.trim();
+      if (!title || coveredTopics.some((topic) => normalizeTopicTitle(topic.title) === normalizeTopicTitle(title))) {
+        setTopicTrackingStatus("");
+        return;
+      }
+
+      await activity.saveCoveredTopic(title, user.uid);
+      coveredTopics.unshift({ title, coveredAtMs: Date.now() });
+      setTopicTrackingStatus(`Added "${title}" to Topics covered.`, 4000);
+    }).catch((error) => {
+      console.error("Could not check or save a covered topic.", error);
+      setTopicTrackingStatus(error.message || "Could not update Topics covered.");
     });
   }
 
@@ -715,6 +799,7 @@ document.addEventListener("DOMContentLoaded", () => {
       saveActiveConversation(messageText);
       messagesAnswered += 1;
       setActivityConversation(activeChatId);
+      checkCoveredTopicInBackground(conversation);
     } catch (error) {
       messagesFailed += 1;
       saveChatActivity();

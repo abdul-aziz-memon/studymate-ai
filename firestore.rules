@@ -43,6 +43,14 @@ service cloud.firestore {
         && data.conversationIds is list;
     }
 
+    function validCoveredTopic(data) {
+      return data.keys().hasOnly(['title', 'coveredAtMs'])
+        && data.title is string
+        && data.title.size() > 0
+        && data.title.size() <= 100
+        && data.coveredAtMs is int;
+    }
+
     match /users/{userId}/activity/{activityId} {
       allow read, delete: if ownsActivity(userId);
       allow create, update: if ownsActivity(userId)
@@ -51,6 +59,12 @@ service cloud.firestore {
           (request.resource.data.type == 'game' && validGameActivity(request.resource.data))
           || (request.resource.data.type == 'chat' && validChatActivity(request.resource.data))
         );
+    }
+
+    match /users/{userId}/topics/{topicId} {
+      allow read, delete: if ownsActivity(userId);
+      allow create, update: if ownsActivity(userId)
+        && validCoveredTopic(request.resource.data);
     }
   }
 }

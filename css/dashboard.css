@@ -378,6 +378,10 @@ button {
   overflow-wrap: anywhere;
 }
 
+.topic-message:not(:empty) {
+  margin-top: 12px;
+}
+
 .topic-row {
   display: flex;
   min-width: 0;

@@ -83,6 +83,48 @@ export async function loadCoveredTopics() {
     .sort((first, second) => second.coveredAtMs - first.coveredAtMs);
 }
 
+export async function updateLeaderboardEntry(displayName, activityRecords, topics) {
+  if (!db) {
+    throw new Error("Firebase is not configured, so leaderboard scores cannot be saved.");
+  }
+  if (!Array.isArray(activityRecords) || !Array.isArray(topics)) {
+    throw new Error("Leaderboard data is invalid.");
+  }
+
+  const user = await getSignedInUser();
+  const name = typeof displayName === "string" ? displayName.trim() : "";
+  if (!name || name.length > 80) {
+    throw new Error("Your display name must be between 1 and 80 characters to appear on the leaderboard.");
+  }
+  const gameWins = activityRecords.filter((record) => record.type === "game" && record.outcome === "win").length;
+  await setDoc(doc(db, "leaderboard", user.uid), {
+    displayName: name,
+    gameWins,
+    topicCount: topics.length
+  });
+}
+
+export async function loadLeaderboardEntries() {
+  if (!db) {
+    throw new Error("Firebase is not configured, so leaderboards cannot be loaded.");
+  }
+  await getSignedInUser();
+  const snapshot = await getDocs(collection(db, "leaderboard"));
+  return snapshot.docs
+    .map((entry) => ({ id: entry.id, ...entry.data() }))
+    .filter((entry) => (
+      typeof entry.displayName === "string"
+      && entry.displayName.trim().length > 0
+      && entry.displayName.length <= 80
+      && Number.isSafeInteger(entry.gameWins)
+      && entry.gameWins >= 0
+      && entry.gameWins <= 1000000
+      && Number.isSafeInteger(entry.topicCount)
+      && entry.topicCount >= 0
+      && entry.topicCount <= 1000000
+    ));
+}
+
 export async function saveCoveredTopic(topicTitle, expectedUserId) {
   if (!db) {
     throw new Error("Firebase is not configured, so covered topics cannot be saved.");

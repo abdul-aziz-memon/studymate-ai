@@ -91,6 +91,35 @@
       <ul class="topic-list" id="topics-list" aria-live="polite"></ul>
     </section>
 
+    <section class="dashboard-panel" aria-labelledby="leaderboards-title">
+      <div class="panel-heading">
+        <div>
+          <p class="panel-kicker">ALL-TIME RANKINGS</p>
+          <h2 id="leaderboards-title">Leaderboards</h2>
+        </div>
+      </div>
+      <p class="leaderboard-note">All-time scores refresh when users open their dashboards. Account names and scores are visible to signed-in users and are not independently verified.</p>
+      <p class="dashboard-message" id="leaderboard-message" role="status" aria-live="polite">Loading leaderboards...</p>
+      <div class="leaderboard-grid">
+        <section class="leaderboard-card" aria-labelledby="games-leaderboard-title">
+          <div class="leaderboard-card-heading">
+            <h3 id="games-leaderboard-title">Games leaderboard</h3>
+            <span>Game wins</span>
+          </div>
+          <p class="leaderboard-empty" id="games-leaderboard-empty" hidden>No game wins recorded yet.</p>
+          <ol class="leaderboard-list" id="games-leaderboard" aria-label="Top players by game wins" aria-live="polite"></ol>
+        </section>
+        <section class="leaderboard-card" aria-labelledby="topics-leaderboard-title">
+          <div class="leaderboard-card-heading">
+            <h3 id="topics-leaderboard-title">Chat leaderboard</h3>
+            <span>Topics studied</span>
+          </div>
+          <p class="leaderboard-empty" id="topics-leaderboard-empty" hidden>No topics studied yet.</p>
+          <ol class="leaderboard-list" id="topics-leaderboard" aria-label="Top players by topics studied" aria-live="polite"></ol>
+        </section>
+      </div>
+    </section>
+
     <section class="dashboard-panel activity-panel" aria-labelledby="activity-title">
         <div class="panel-heading">
           <div>

@@ -1,6 +1,11 @@
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { auth } from "./firebase.js";
-import { loadActivityRecords, loadCoveredTopics } from "./activity.js";
+import {
+  loadActivityRecords,
+  loadCoveredTopics,
+  loadLeaderboardEntries,
+  updateLeaderboardEntry
+} from "./activity.js";
 
 const accountName = document.getElementById("account-name");
 const accountEmail = document.getElementById("account-email");
@@ -13,6 +18,11 @@ const activityEmpty = document.getElementById("activity-empty");
 const topicsList = document.getElementById("topics-list");
 const topicsEmpty = document.getElementById("topics-empty");
 const topicsMessage = document.getElementById("topics-message");
+const leaderboardMessage = document.getElementById("leaderboard-message");
+const gamesLeaderboard = document.getElementById("games-leaderboard");
+const gamesLeaderboardEmpty = document.getElementById("games-leaderboard-empty");
+const topicsLeaderboard = document.getElementById("topics-leaderboard");
+const topicsLeaderboardEmpty = document.getElementById("topics-leaderboard-empty");
 
 function formatDate(timestamp) {
   if (!Number.isFinite(timestamp)) {
@@ -167,6 +177,44 @@ function renderCoveredTopics(topics) {
   });
 }
 
+function renderLeaderboardList(list, emptyMessage, entries, scoreKey, singularScoreLabel, pluralScoreLabel) {
+  const rankedEntries = entries
+    .filter((entry) => entry[scoreKey] > 0)
+    .sort((first, second) => (
+      second[scoreKey] - first[scoreKey]
+      || first.displayName.localeCompare(second.displayName)
+    ))
+    .slice(0, 10);
+
+  list.replaceChildren();
+  emptyMessage.hidden = rankedEntries.length > 0;
+  rankedEntries.forEach((entry, index) => {
+    const row = document.createElement("li");
+    row.className = "leaderboard-entry";
+
+    const rank = document.createElement("span");
+    rank.className = "leaderboard-rank";
+    rank.textContent = String(index + 1);
+    rank.setAttribute("aria-label", `Rank ${index + 1}`);
+
+    const name = document.createElement("strong");
+    name.className = "leaderboard-name";
+    name.textContent = entry.displayName;
+
+    const score = document.createElement("span");
+    score.className = "leaderboard-score";
+    score.textContent = `${entry[scoreKey]} ${entry[scoreKey] === 1 ? singularScoreLabel : pluralScoreLabel}`;
+
+    row.append(rank, name, score);
+    list.append(row);
+  });
+}
+
+function renderLeaderboards(entries) {
+  renderLeaderboardList(gamesLeaderboard, gamesLeaderboardEmpty, entries, "gameWins", "win", "wins");
+  renderLeaderboardList(topicsLeaderboard, topicsLeaderboardEmpty, entries, "topicCount", "topic", "topics");
+}
+
 if (!auth) {
   window.location.replace("login.html");
 } else {
@@ -201,6 +249,28 @@ if (!auth) {
     } else {
       console.error("Could not load covered topics.", topicsResult.reason);
       topicsMessage.textContent = `Could not load topics: ${topicsResult.reason.message}`;
+    }
+
+    let updateError = null;
+    if (activityResult.status === "fulfilled" && topicsResult.status === "fulfilled") {
+      try {
+        await updateLeaderboardEntry(name, activityResult.value, topicsResult.value);
+      } catch (error) {
+        console.error("Could not update your leaderboard scores.", error);
+        updateError = error;
+      }
+    } else {
+      updateError = new Error("Your activity data could not be loaded.");
+    }
+
+    try {
+      renderLeaderboards(await loadLeaderboardEntries());
+      leaderboardMessage.textContent = updateError
+        ? `Your ranking may be out of date: ${updateError.message}`
+        : "";
+    } catch (error) {
+      console.error("Could not load leaderboards.", error);
+      leaderboardMessage.textContent = `Could not load leaderboards: ${error.message}`;
     }
   }, (error) => {
     console.error("Could not check the current authentication state.", error);

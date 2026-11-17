@@ -49,7 +49,7 @@ The function reads `process.env.GROQ_API_KEY` directly. It does not read `.env` 
 
 ### Enable Firestore activity tracking
 
-Create a Cloud Firestore database in the Firebase console and publish the rules in [`firestore.rules`](firestore.rules). The rules let signed-in users access only their own activity records under `users/{userId}/activity` and topic labels under `users/{userId}/topics`. Activity records store game results and timing, plus chat message counts and timing; chat text and attached images are not included. Topic labels are saved for signed-in users and shown on their dashboard. Guest chats are not tracked.
+Create a Cloud Firestore database in the Firebase console and publish the rules in [`firestore.rules`](firestore.rules). The rules let signed-in users access only their own activity records under `users/{userId}/activity` and topic labels under `users/{userId}/topics`. Signed-in users can read the summary documents in `leaderboard` to see all-time rankings; each user can write only their own summary, which is refreshed when they open the dashboard. Activity records store game results and timing, plus chat message counts and timing; chat text and attached images are not included. Topic labels are saved for signed-in users and shown on their dashboard. Guest chats are not tracked.
 
 ### 3. Deploy the current commit
 
@@ -78,7 +78,7 @@ The function accepts up to 40 messages, limits user messages to 4,000 characters
 
 ### Privacy and usage
 
-The deployed chat and topic-check endpoints are public. For signed-in users, each successful answer triggers an additional Groq request in the background using up to six recent text messages and existing topic labels; image attachments are not included in this topic-check request. Only newly identified topic labels are saved to Firestore. Messages and attached images are sent to Groq to generate answers. Do not send passwords, sensitive personal information, or other private material. Check your Groq account’s usage limits and Vercel traffic controls to help prevent unexpected usage.
+The deployed chat and topic-check endpoints are public. For signed-in users, each successful answer triggers an additional Groq request in the background using up to six recent text messages and existing topic labels; image attachments are not included in this topic-check request. Only newly identified topic labels are saved to Firestore. Messages and attached images are sent to Groq to generate answers. Leaderboards show account display names and scores to signed-in users; scores are summaries computed in the browser from the user's activity records and are not tamper-proof. Do not send passwords, sensitive personal information, or other private material. Check your Groq account’s usage limits and Vercel traffic controls to help prevent unexpected usage.
 
 ## Project structure 🗂️
 
@@ -109,7 +109,7 @@ studymate-ai/
 └── js/
     ├── activity.js      # Firebase topic, game, and chat activity records
     ├── chat.js          # Chat UI, image preparation, and background topic checks
-    ├── dashboard.js     # Firebase-backed activity dashboard
+    ├── dashboard.js     # Firebase-backed activity and leaderboard dashboard
     ├── firebase.js      # Shared Firebase Auth and Firestore setup
     ├── games.js         # Games and game activity tracking
     └── themes.js        # Shared page-control behavior
@@ -122,6 +122,7 @@ studymate-ai/
 - **`lib/chat-api.js`** holds the chat validation, Groq API request, and upstream error handling shared by the function.
 - **`lib/topic-api.js`** validates topic-check requests and asks Groq to identify or match a study topic.
 - **`js/activity.js`** stores signed-in users' topic labels, game results, and chat counts/timing in Firestore.
+- **`js/dashboard.js`** refreshes each signed-in user's all-time leaderboard summary and renders the games and topics rankings.
 - **`firestore.rules`** restricts activity and topic access to each record's owning Firebase user.
 - **`tests/topic-api.test.js`** covers topic request validation and model-response parsing; run it with `npm run test:topics`.
 - **`vercel.json`** configures the chat function’s maximum duration.

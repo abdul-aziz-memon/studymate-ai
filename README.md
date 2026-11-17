@@ -30,9 +30,9 @@ AI can make mistakes, even when it sounds confident. Check important facts, calc
 
 In Vercel, import the Git repository containing this project. Set the **Root Directory** to the folder containing `vercel.json` and `index.html`. Use the **Other** framework preset; this is a static HTML project with a Vercel Function, not a Node server.
 
-The pages are static files; `package.json` is used only to build Tailwind CSS. Vercel serves `index.html` and the other static assets from the project root. The generated `css/tailwind.css` is committed, so deployment does not require a build command.
+The pages are static files; `package.json` is used only to build Tailwind CSS and assemble the landing-page stylesheet. Vercel serves `index.html` and the other static assets from the project root. The generated stylesheets are committed, so deployment does not require a build command.
 
-To regenerate the Tailwind stylesheet after changing page markup or utility classes, install the development dependencies with `npm install` and run `npm run build:css`. During development, `npm run watch:css` rebuilds it when source files change. Commit the regenerated `css/tailwind.css` with your changes.
+To regenerate the Tailwind stylesheet after changing page markup or utility classes, install the development dependencies with `npm install` and run `npm run build:css`. This also rebuilds `css/homepage.bundle.css` from the Tailwind, theme, and homepage stylesheets used by the landing page. During development, `npm run watch:css` rebuilds the Tailwind stylesheet when source files change; run `npm run build:homepage-css` afterward to refresh the landing-page bundle. Commit the generated stylesheets with your changes.
 
 ### 2. Add the Groq API key to Vercel
 
@@ -93,6 +93,7 @@ studymate-ai/
 ├── contribute.md        # Contribution guidelines
 ├── LICENSE              # Project license
 ├── css/
+│   ├── homepage.bundle.css # Combined landing-page styles
 │   ├── homepage.css     # Landing page styles
 │   ├── chat.css         # Chat and answer styles
 │   ├── dashboard.css    # Dashboard and activity-history styles

@@ -3,7 +3,7 @@
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
-  src: url("font-inter/Inter-VariableFont_opsz,wght.ttf") format("truetype");
+  src: url("font-inter/Inter-Latin.woff2") format("woff2");
 }
 
 @font-face {
@@ -11,7 +11,7 @@
   font-style: italic;
   font-weight: 100 900;
   font-display: swap;
-  src: url("font-inter/Inter-Italic-VariableFont_opsz,wght.ttf") format("truetype");
+  src: url("font-inter/Inter-Italic-Latin.woff2") format("woff2");
 }
 
 @property --theme-primary {
@@ -52,49 +52,6 @@
   --theme-page: #f8fafc;
   --theme-gradient: linear-gradient(110deg, var(--theme-dark), var(--theme-primary) 55%, var(--theme-secondary));
   --theme-banner: linear-gradient(135deg, var(--theme-soft), #ffffff 55%, color-mix(in srgb, var(--theme-soft) 55%, white));
-  animation: theme-color-cycle 60s linear infinite;
-}
-
-@keyframes theme-color-cycle {
-  0%, 100% {
-    --theme-primary: #4f46e5;
-    --theme-secondary: #7c3aed;
-    --theme-dark: #3730a3;
-    --theme-soft: #eef2ff;
-    --theme-page: #f8fafc;
-  }
-
-  20% {
-    --theme-primary: #0284c7;
-    --theme-secondary: #06b6d4;
-    --theme-dark: #075985;
-    --theme-soft: #e0f2fe;
-    --theme-page: #f0f9ff;
-  }
-
-  40% {
-    --theme-primary: #059669;
-    --theme-secondary: #10b981;
-    --theme-dark: #065f46;
-    --theme-soft: #d1fae5;
-    --theme-page: #f0fdf4;
-  }
-
-  60% {
-    --theme-primary: #e11d48;
-    --theme-secondary: #f43f5e;
-    --theme-dark: #9f1239;
-    --theme-soft: #ffe4e6;
-    --theme-page: #fff1f2;
-  }
-
-  80% {
-    --theme-primary: #d97706;
-    --theme-secondary: #f59e0b;
-    --theme-dark: #92400e;
-    --theme-soft: #fef3c7;
-    --theme-page: #fffbeb;
-  }
 }
 
 :where(body *) {

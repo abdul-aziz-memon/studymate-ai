@@ -2,7 +2,8 @@
   "name": "studymate-ai",
   "private": true,
   "scripts": {
-    "build:css": "tailwindcss -i ./css/tailwind.input.css -o ./css/tailwind.css --minify",
+    "build:css": "tailwindcss -i ./css/tailwind.input.css -o ./css/tailwind.css --minify && npm run build:homepage-css",
+    "build:homepage-css": "node scripts/build-homepage-css.js",
     "watch:css": "tailwindcss -i ./css/tailwind.input.css -o ./css/tailwind.css --watch"
   },
   "devDependencies": {

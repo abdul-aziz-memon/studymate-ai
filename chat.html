@@ -142,11 +142,7 @@
             <span id="image-preview-name" class="min-w-0 flex-1 truncate text-sm text-slate-600"></span>
             <button id="remove-image-button" type="button" class="rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-white hover:text-rose-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500" aria-label="Remove attached image">Remove</button>
           </div>
-          <div class="prompt-suggestions" aria-label="Try a sample question">
-            <button class="prompt-chip" type="button" data-prompt="Explain Photosynthesis simply">🌿 Explain Photosynthesis simply</button>
-            <button class="prompt-chip" type="button" data-prompt="Help me solve 2x + 5 = 15">📐 Help me solve 2x + 5 = 15</button>
-            <button class="prompt-chip" type="button" data-prompt="What is Newton's First Law?">🍕 What is Newton's First Law?</button>
-          </div>
+          <div id="prompt-suggestions" class="prompt-suggestions" aria-label="Suggested next questions" aria-live="polite" hidden></div>
           <p id="chat-help" class="chat-help">Your question and any attached image are sent securely through the StudyMate server. Chat history is saved in this browser; images aren't saved.</p>
       </form>
       </div>

@@ -875,6 +875,10 @@ body {
   margin-top: 0.8rem;
 }
 
+.prompt-suggestions[hidden] {
+  display: none;
+}
+
 .chat-help {
   margin: 0.7rem 0 0;
   color: #64748b;

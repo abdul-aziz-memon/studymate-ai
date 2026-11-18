@@ -34,7 +34,16 @@ test("accepts assistant history longer than the user-message limit", async (t) =
     return {
       ok: true,
       status: 200,
-      json: async () => ({ choices: [{ message: { content: "Here is more detail." } }] })
+      json: async () => ({
+        choices: [{
+          message: {
+            content: JSON.stringify({
+              answer: "Here is more detail.",
+              suggestions: ["Show another example?", "Can we try a practice problem?", "How does this work in real life?"]
+            })
+          }
+        }]
+      })
     };
   };
 
@@ -49,6 +58,11 @@ test("accepts assistant history longer than the user-message limit", async (t) =
   }, response);
 
   assert.equal(response.statusCode, 200);
+  assert.deepEqual(response.data, {
+    answer: "Here is more detail.",
+    suggestions: ["Show another example?", "Can we try a practice problem?", "How does this work in real life?"]
+  });
+  assert.equal(upstreamBody.response_format.type, "json_object");
   assert.equal(upstreamBody.messages[3].content.length, 5000);
   assert.match(upstreamBody.messages[1].content, /Alex/);
   assert.match(upstreamBody.messages[1].content, /Grade 9/);
@@ -73,4 +87,37 @@ test("rejects unsupported student profile grades", async () => {
 
   assert.equal(response.statusCode, 400);
   assert.deepEqual(response.data, { error: "The student profile is invalid. Add a display name and a grade from 1 to 12." });
+});
+
+test("rejects AI replies without three valid follow-up suggestions", async (t) => {
+  const originalFetch = global.fetch;
+  const originalApiKey = process.env.GROQ_API_KEY;
+  t.after(() => {
+    global.fetch = originalFetch;
+    if (originalApiKey === undefined) {
+      delete process.env.GROQ_API_KEY;
+    } else {
+      process.env.GROQ_API_KEY = originalApiKey;
+    }
+  });
+  process.env.GROQ_API_KEY = "test-key";
+  global.fetch = async () => ({
+    ok: true,
+    status: 200,
+    json: async () => ({
+      choices: [{
+        message: {
+          content: JSON.stringify({ answer: "Here's an explanation.", suggestions: ["Try an example?"] })
+        }
+      }]
+    })
+  });
+
+  const response = createResponse();
+  await handleChatBody({
+    messages: [{ role: "user", content: "Explain fractions." }]
+  }, response);
+
+  assert.equal(response.statusCode, 502);
+  assert.deepEqual(response.data, { error: "The AI service returned an invalid response. Please try again." });
 });

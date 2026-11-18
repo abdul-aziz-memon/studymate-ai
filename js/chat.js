@@ -8,6 +8,25 @@ const activityApiPromise = import("./activity.js").then(
   (error) => ({ error })
 );
 
+function normalizePromptSuggestions(suggestions) {
+  if (!Array.isArray(suggestions)) {
+    return [];
+  }
+
+  const normalized = suggestions
+    .filter((suggestion) => typeof suggestion === "string")
+    .map((suggestion) => suggestion
+      .replace(/[\u0000-\u001f\u007f]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim())
+    .filter((suggestion) => suggestion.length > 0 && suggestion.length <= 120)
+    .filter((suggestion, index, list) => (
+      list.findIndex((other) => other.toLocaleLowerCase() === suggestion.toLocaleLowerCase()) === index
+    ));
+
+  return normalized.slice(0, 3);
+}
+
 function createActivityId() {
   return crypto.randomUUID();
 }
@@ -36,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const sendButton = document.getElementById("send-button");
   const chatMessages = document.getElementById("chat-messages");
   const chatEmptyState = document.getElementById("chat-empty-state");
-  const promptChips = document.querySelectorAll("[data-prompt]");
+  const promptSuggestions = document.getElementById("prompt-suggestions");
   const workspace = document.querySelector(".chat-workspace");
   const sidebarToggleButton = document.getElementById("sidebar-toggle-button");
   const sidebarCloseButton = document.getElementById("sidebar-close-button");
@@ -508,7 +527,16 @@ document.addEventListener("DOMContentLoaded", () => {
             && typeof message.content === "string"
           ))
           .slice(-38)
-          .map(({ role, content }) => ({ role, content })),
+          .map(({ role, content, suggestions }) => {
+            const message = { role, content };
+            const normalizedSuggestions = role === "assistant"
+              ? normalizePromptSuggestions(suggestions)
+              : [];
+            if (normalizedSuggestions.length === 3) {
+              message.suggestions = normalizedSuggestions;
+            }
+            return message;
+          }),
       }));
 
       if (validChats.length !== savedChats.length) {
@@ -527,7 +555,16 @@ document.addEventListener("DOMContentLoaded", () => {
         id: chat.id,
         title: chat.title,
         updatedAt: chat.updatedAt,
-        messages: chat.messages.map(({ role, content }) => ({ role, content })),
+        messages: chat.messages.map(({ role, content, suggestions }) => {
+          const message = { role, content };
+          const normalizedSuggestions = role === "assistant"
+            ? normalizePromptSuggestions(suggestions)
+            : [];
+          if (normalizedSuggestions.length === 3) {
+            message.suggestions = normalizedSuggestions;
+          }
+          return message;
+        }),
       }));
       localStorage.setItem(chatHistoryStorageKey, JSON.stringify({ activeChatId, chats: savedChats }));
       chatHistoryStatus.textContent = "";
@@ -567,12 +604,33 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!conversation.length) {
       chatEmptyState.hidden = false;
       chatMessages.append(chatEmptyState);
+      renderPromptSuggestions([]);
       return;
     }
 
     chatEmptyState.hidden = true;
     conversation.forEach((message) => {
       addMessage(message.content, message.role, "", message.role === "assistant", message.image || null);
+    });
+    const lastMessage = conversation[conversation.length - 1];
+    renderPromptSuggestions(lastMessage.role === "assistant" ? lastMessage.suggestions : []);
+  }
+
+  function renderPromptSuggestions(suggestions) {
+    const normalizedSuggestions = normalizePromptSuggestions(suggestions);
+    promptSuggestions.replaceChildren();
+    promptSuggestions.hidden = normalizedSuggestions.length !== 3;
+    if (promptSuggestions.hidden) {
+      return;
+    }
+
+    normalizedSuggestions.forEach((suggestion) => {
+      const chip = document.createElement("button");
+      chip.className = "prompt-chip";
+      chip.type = "button";
+      chip.dataset.prompt = suggestion;
+      chip.textContent = suggestion;
+      promptSuggestions.append(chip);
     });
   }
 
@@ -760,6 +818,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const messageText = question || (image ? "Please analyze this image." : "");
     chatEmptyState.hidden = true;
+    renderPromptSuggestions([]);
     addMessage(messageText, "user", "", false, image?.dataUrl);
     setSendingState(true);
     const thinkingMessage = addMessage("StudyMate is thinking... ⚡", "assistant", "thinking-message border-indigo-200");
@@ -805,6 +864,10 @@ document.addEventListener("DOMContentLoaded", () => {
       if (typeof answer !== "string" || !answer.trim()) {
         throw new Error("StudyMate received an empty reply. Please try asking another way.");
       }
+      const suggestions = normalizePromptSuggestions(data.suggestions);
+      if (suggestions.length !== 3) {
+        throw new Error("StudyMate couldn't prepare follow-up questions. Please try again.");
+      }
 
       thinkingMessage.remove();
       addMessage(answer.trim(), "assistant", "", true);
@@ -815,8 +878,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       conversation.push(
         { role: "user", content: messageText, ...(image ? { image: image.dataUrl } : {}) },
-        { role: "assistant", content: answer.trim() }
+        { role: "assistant", content: answer.trim(), suggestions }
       );
+      renderPromptSuggestions(suggestions);
       if (conversation.length > 38) {
         conversation.splice(0, conversation.length - 38);
       }
@@ -901,14 +965,13 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("beforeunload", saveChatActivity);
   window.setInterval(saveChatActivity, 10000);
 
-  promptChips.forEach((chip) => {
-    chip.addEventListener("click", () => {
-      if (isSending) {
-        return;
-      }
-      chatInput.value = chip.dataset.prompt;
-      form.requestSubmit();
-    });
+  promptSuggestions.addEventListener("click", (event) => {
+    const target = event.target instanceof Element ? event.target.closest("button[data-prompt]") : null;
+    if (!target || !promptSuggestions.contains(target) || isSending) {
+      return;
+    }
+    chatInput.value = target.dataset.prompt;
+    form.requestSubmit();
   });
 
   chatSessions = loadChatSessions();

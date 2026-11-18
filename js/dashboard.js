@@ -28,6 +28,16 @@ const gamesLeaderboardEmpty = document.getElementById("games-leaderboard-empty")
 const topicsLeaderboard = document.getElementById("topics-leaderboard");
 const topicsLeaderboardEmpty = document.getElementById("topics-leaderboard-empty");
 
+document.addEventListener("studymate:profile-updated", (event) => {
+  const name = event.detail?.displayName;
+  if (!name) {
+    return;
+  }
+  accountName.textContent = name;
+  accountAvatar.textContent = name.charAt(0).toUpperCase() || "S";
+  welcomeName.textContent = name;
+});
+
 function formatDate(timestamp) {
   if (!Number.isFinite(timestamp)) {
     return "Date unavailable";
@@ -257,7 +267,6 @@ if (!auth) {
     accountAvatar.textContent = initial;
     welcomeName.textContent = name;
 
-    message.textContent = "Loading your activity...";
     const [activityResult, topicsResult] = await Promise.allSettled([
       loadActivityRecords(),
       loadCoveredTopics()

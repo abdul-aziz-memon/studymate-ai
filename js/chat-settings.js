@@ -95,6 +95,7 @@ profileForm.addEventListener("submit", async (event) => {
     accountAvatar.textContent = name.charAt(0).toUpperCase();
     gradeInput.value = profile.grade;
     profileFeedback.textContent = "Your display name and grade have been updated.";
+    document.dispatchEvent(new CustomEvent("studymate:profile-updated", { detail: { displayName: name } }));
   } catch (error) {
     profileFeedback.textContent = error.code ? getErrorMessage(error) : error.message;
   } finally {

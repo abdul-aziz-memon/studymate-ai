@@ -45,33 +45,45 @@
 
     <p class="dashboard-message" id="dashboard-message" role="status" aria-live="polite"></p>
 
-    <section class="stats-grid" aria-label="Study and game overview">
-      <article class="stat-item">
+    <section class="stats-grid" aria-label="Study and game overview" aria-busy="true">
+      <div class="stats-loading" role="status" aria-live="polite">
+        <svg class="stats-loading-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 19V5m0 14h16" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/>
+          <path d="m7 15 4-4 3 2 5-6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"/>
+          <circle cx="19" cy="7" r="1.5" fill="currentColor"/>
+        </svg>
+        <p class="stats-loading-title">Loading your study stats</p>
+        <p class="stats-loading-copy">Gathering your latest study and game activity…</p>
+        <div class="stats-loading-bar" role="progressbar" aria-label="Loading study statistics">
+          <span></span>
+        </div>
+      </div>
+      <article class="stat-item" hidden>
         <p class="stat-label">Games played</p>
         <p class="stat-value" id="games-played">0</p>
         <p class="stat-note">All recorded games</p>
       </article>
-      <article class="stat-item">
+      <article class="stat-item" hidden>
         <p class="stat-label">Wins</p>
         <p class="stat-value" id="games-won">0</p>
         <p class="stat-note" id="games-results-note">0 losses · 0 draws</p>
       </article>
-      <article class="stat-item">
+      <article class="stat-item" hidden>
         <p class="stat-label">Time playing</p>
         <p class="stat-value" id="game-time">0 <span>sec</span></p>
         <p class="stat-note">Active game time</p>
       </article>
-      <article class="stat-item">
+      <article class="stat-item" hidden>
         <p class="stat-label">Chat messages</p>
         <p class="stat-value" id="chat-messages-count">0</p>
         <p class="stat-note">Questions sent to StudyMate</p>
       </article>
-      <article class="stat-item">
+      <article class="stat-item" hidden>
         <p class="stat-label">Chat time</p>
         <p class="stat-value" id="chat-time">0 <span>sec</span></p>
         <p class="stat-note">Active chat time</p>
       </article>
-      <article class="stat-item">
+      <article class="stat-item" hidden>
         <p class="stat-label">Chats</p>
         <p class="stat-value" id="chat-sessions">0</p>
         <p class="stat-note">Conversations opened</p>

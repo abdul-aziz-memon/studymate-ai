@@ -14,6 +14,9 @@ const accountAvatar = document.getElementById("account-avatar");
 const welcomeName = document.getElementById("welcome-name");
 const logoutButton = document.getElementById("logout-button");
 const message = document.getElementById("dashboard-message");
+const statsGrid = document.querySelector(".stats-grid");
+const statsLoading = document.querySelector(".stats-loading");
+const statItems = document.querySelectorAll(".stat-item");
 const activityList = document.getElementById("activity-list");
 const activityEmpty = document.getElementById("activity-empty");
 const topicsList = document.getElementById("topics-list");
@@ -154,6 +157,14 @@ function renderActivity(records) {
   });
 }
 
+function finishStatsLoading() {
+  statsGrid.setAttribute("aria-busy", "false");
+  statsLoading.hidden = true;
+  statItems.forEach((item) => {
+    item.hidden = false;
+  });
+}
+
 function renderCoveredTopics(topics) {
   topicsList.replaceChildren();
   topicsEmpty.hidden = topics.length > 0;
@@ -231,6 +242,7 @@ if (!auth) {
     } catch (error) {
       console.error("Could not load the current user's study profile.", error);
       message.textContent = `Could not load your profile: ${error.message}`;
+      finishStatsLoading();
       return;
     }
     if (!isCompleteUserProfile(profile)) {
@@ -257,6 +269,7 @@ if (!auth) {
       console.error("Could not load dashboard activity.", activityResult.reason);
       message.textContent = `Could not load activity: ${activityResult.reason.message}`;
     }
+    finishStatsLoading();
     if (topicsResult.status === "fulfilled") {
       renderCoveredTopics(topicsResult.value);
       topicsMessage.textContent = "";
@@ -289,6 +302,7 @@ if (!auth) {
   }, (error) => {
     console.error("Could not check the current authentication state.", error);
     message.textContent = "Could not check your account. Please refresh the page.";
+    finishStatsLoading();
   });
 
   logoutButton.addEventListener("click", async () => {

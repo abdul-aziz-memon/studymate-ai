@@ -691,10 +691,6 @@ button {
   box-shadow: 0 7px 16px rgb(15 23 42 / 7%);
 }
 
-.leaderboard-entry-sample {
-  background: color-mix(in srgb, white 95%, var(--theme-soft));
-}
-
 .leaderboard-entry-current,
 .leaderboard-entry-current:hover {
   border: 2px solid #0891b2;

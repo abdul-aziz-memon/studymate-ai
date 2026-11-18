@@ -28,21 +28,21 @@ const gamesLeaderboardEmpty = document.getElementById("games-leaderboard-empty")
 const topicsLeaderboard = document.getElementById("topics-leaderboard");
 const topicsLeaderboardEmpty = document.getElementById("topics-leaderboard-empty");
 const sampleLeaderboardEntries = [
-  { id: "sample-liam-carter", displayName: "Liam Carter", gameWins: 17, topicCount: 8, isSample: true },
-  { id: "sample-noah-bennett", displayName: "Noah Bennett", gameWins: 12, topicCount: 16, isSample: true },
-  { id: "sample-ethan-brooks", displayName: "Ethan Brooks", gameWins: 8, topicCount: 14, isSample: true },
-  { id: "sample-mateo-rivera", displayName: "Mateo Rivera", gameWins: 19, topicCount: 11, isSample: true },
-  { id: "sample-aiden-foster", displayName: "Aiden Foster", gameWins: 10, topicCount: 20, isSample: true },
-  { id: "sample-arjun-shah", displayName: "Arjun Shah", gameWins: 15, topicCount: 7, isSample: true },
-  { id: "sample-caleb-turner", displayName: "Caleb Turner", gameWins: 5, topicCount: 13, isSample: true },
-  { id: "sample-owen-parker", displayName: "Owen Parker", gameWins: 13, topicCount: 4, isSample: true },
-  { id: "sample-emma-hayes", displayName: "Emma Hayes", gameWins: 18, topicCount: 17, isSample: true },
-  { id: "sample-ava-patel", displayName: "Ava Patel", gameWins: 9, topicCount: 12, isSample: true },
-  { id: "sample-mia-cooper", displayName: "Mia Cooper", gameWins: 7, topicCount: 19, isSample: true },
-  { id: "sample-sofia-reed", displayName: "Sofia Reed", gameWins: 14, topicCount: 6, isSample: true },
-  { id: "sample-layla-khan", displayName: "Layla Khan", gameWins: 11, topicCount: 15, isSample: true },
-  { id: "sample-zoe-morgan", displayName: "Zoe Morgan", gameWins: 20, topicCount: 10, isSample: true },
-  { id: "sample-isla-bennett", displayName: "Isla Bennett", gameWins: 6, topicCount: 18, isSample: true }
+  { id: "sample-liam-carter", displayName: "Liam Carter", gameWins: 17, topicCount: 8 },
+  { id: "sample-noah-bennett", displayName: "Noah Bennett", gameWins: 12, topicCount: 16 },
+  { id: "sample-ethan-brooks", displayName: "Ethan Brooks", gameWins: 8, topicCount: 14 },
+  { id: "sample-mateo-rivera", displayName: "Mateo Rivera", gameWins: 19, topicCount: 11 },
+  { id: "sample-aiden-foster", displayName: "Aiden Foster", gameWins: 10, topicCount: 20 },
+  { id: "sample-arjun-shah", displayName: "Arjun Shah", gameWins: 15, topicCount: 7 },
+  { id: "sample-caleb-turner", displayName: "Caleb Turner", gameWins: 5, topicCount: 13 },
+  { id: "sample-owen-parker", displayName: "Owen Parker", gameWins: 13, topicCount: 4 },
+  { id: "sample-emma-hayes", displayName: "Emma Hayes", gameWins: 18, topicCount: 17 },
+  { id: "sample-ava-patel", displayName: "Ava Patel", gameWins: 9, topicCount: 12 },
+  { id: "sample-mia-cooper", displayName: "Mia Cooper", gameWins: 7, topicCount: 19 },
+  { id: "sample-sofia-reed", displayName: "Sofia Reed", gameWins: 14, topicCount: 6 },
+  { id: "sample-layla-khan", displayName: "Layla Khan", gameWins: 11, topicCount: 15 },
+  { id: "sample-zoe-morgan", displayName: "Zoe Morgan", gameWins: 20, topicCount: 10 },
+  { id: "sample-isla-bennett", displayName: "Isla Bennett", gameWins: 6, topicCount: 18 }
 ];
 
 document.addEventListener("studymate:profile-updated", (event) => {
@@ -229,7 +229,7 @@ function renderLeaderboardList(list, emptyMessage, entries, scoreKey, singularSc
   rankedEntries.forEach((entry, index) => {
     const row = document.createElement("li");
     const isCurrentUser = entry.id === currentUserId;
-    row.className = `leaderboard-entry${isCurrentUser ? " leaderboard-entry-current" : ""}${entry.isSample ? " leaderboard-entry-sample" : ""}`;
+    row.className = `leaderboard-entry${isCurrentUser ? " leaderboard-entry-current" : ""}`;
 
     const rank = document.createElement("span");
     rank.className = "leaderboard-rank";
@@ -246,10 +246,10 @@ function renderLeaderboardList(list, emptyMessage, entries, scoreKey, singularSc
     name.textContent = entry.displayName;
     identity.append(name);
 
-    if (isCurrentUser || entry.isSample) {
+    if (isCurrentUser) {
       const badge = document.createElement("span");
-      badge.className = `leaderboard-badge${isCurrentUser ? " leaderboard-badge-current" : ""}`;
-      badge.textContent = isCurrentUser ? "YOU" : "SAMPLE";
+      badge.className = "leaderboard-badge leaderboard-badge-current";
+      badge.textContent = "YOU";
       identity.append(badge);
     }
 

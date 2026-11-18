@@ -611,32 +611,6 @@ button {
   list-style: none;
 }
 
-.leaderboard-note {
-  margin: 0;
-  border: 1px solid color-mix(in srgb, var(--theme-primary) 16%, white);
-  border-radius: 14px;
-  background: linear-gradient(110deg, color-mix(in srgb, var(--theme-soft) 78%, white), white);
-  padding: 14px 16px;
-  color: #475569;
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-.leaderboard-note strong {
-  color: var(--theme-dark);
-}
-
-.leaderboard-note span {
-  display: inline-block;
-  border-radius: 999px;
-  background: #cffafe;
-  padding: 1px 7px;
-  color: #0e7490;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-}
-
 .leaderboard-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

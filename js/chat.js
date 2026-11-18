@@ -1,7 +1,6 @@
 import { isCompleteUserProfile, loadCurrentUserProfile } from "./user-profile.js";
 
 const chatEndpoint = "/api/chat";
-const topicEndpoint = "/api/topics";
 const chatHistoryStorageKey = "studymate-chat-history-v1";
 const activityApiPromise = import("./activity.js").then(
   (activity) => ({ activity }),
@@ -103,9 +102,10 @@ document.addEventListener("DOMContentLoaded", () => {
   let messagesAnswered = 0;
   let messagesFailed = 0;
   let activityWriteQueue = Promise.resolve();
-  let topicCheckQueue = Promise.resolve();
+  let topicWriteQueue = Promise.resolve();
   let coveredTopics = null;
   let coveredTopicsUserId = null;
+  let topicContextLoadError = null;
   let topicStatusTimer = null;
   let lastActivitySnapshot = "";
   const maxImageBytes = 4 * 1024 * 1024;
@@ -160,68 +160,88 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function checkCoveredTopicInBackground(messages) {
-    const context = messages
-      .filter(({ role, content }) => ["user", "assistant"].includes(role) && typeof content === "string")
-      .slice(-6)
-      .map(({ role, content }) => ({ role, content: content.slice(0, 1200) }));
-    if (!context.length) {
+  async function getCoveredTopicContext() {
+    const { activity, error } = await activityApiPromise;
+    if (error) {
+      throw new Error("Topic tracking could not load from Firebase. Refresh the page to try again.");
+    }
+
+    const user = await activity.getCurrentUser();
+    if (!user) {
+      coveredTopics = null;
+      coveredTopicsUserId = null;
+      topicContextLoadError = null;
+      return { activity, user: null, topics: [] };
+    }
+
+    if (coveredTopicsUserId !== user.uid || !Array.isArray(coveredTopics)) {
+      const topics = await activity.loadCoveredTopics();
+      const currentUser = await activity.getCurrentUser();
+      if (!currentUser || currentUser.uid !== user.uid) {
+        throw new Error("Your account changed while loading covered topics. Try again.");
+      }
+      coveredTopics = topics;
+      coveredTopicsUserId = user.uid;
+    }
+
+    topicContextLoadError = null;
+    return { activity, user, topics: coveredTopics };
+  }
+
+  function saveCoveredTopicFromResponse(topicTitle) {
+    if (!topicTitle) {
+      if (!topicContextLoadError) {
+        setTopicTrackingStatus("");
+      }
       return;
     }
 
-    topicCheckQueue = topicCheckQueue.catch(() => {}).then(async () => {
-      const { activity, error } = await activityApiPromise;
-      if (error) {
-        throw new Error("Topic tracking could not load from Firebase. Refresh the page to try again.");
-      }
-
-      const user = await activity.getCurrentUser();
+    topicWriteQueue = topicWriteQueue.catch(() => {}).then(async () => {
+      const { activity, user, topics } = await getCoveredTopicContext();
       if (!user) {
-        coveredTopics = null;
-        coveredTopicsUserId = null;
-        return;
-      }
-      if (coveredTopicsUserId !== user.uid) {
-        coveredTopics = await activity.loadCoveredTopics();
-        coveredTopicsUserId = user.uid;
-      }
-
-      setTopicTrackingStatus("Checking Topics covered...");
-      const response = await fetch(topicEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: context,
-          existingTopics: coveredTopics.slice(0, 100).map(({ title }) => title)
-        })
-      });
-
-      let data;
-      try {
-        data = await response.json();
-      } catch {
-        throw new Error("The topic service returned an unreadable response.");
-      }
-      if (!response.ok) {
-        throw new Error(data?.error || "Could not check Topics covered.");
-      }
-      if (data.topic !== null && typeof data.topic !== "string") {
-        throw new Error("The topic service returned an invalid topic.");
-      }
-
-      const title = data.topic?.trim();
-      if (!title || coveredTopics.some((topic) => normalizeTopicTitle(topic.title) === normalizeTopicTitle(title))) {
         setTopicTrackingStatus("");
         return;
       }
 
+      const title = topicTitle.trim().replace(/\s+/g, " ");
+      if (!title || topics.some((topic) => normalizeTopicTitle(topic.title) === normalizeTopicTitle(title))) {
+        setTopicTrackingStatus("");
+        return;
+      }
+
+      setTopicTrackingStatus("Updating Topics covered...");
       await activity.saveCoveredTopic(title, user.uid);
-      coveredTopics.unshift({ title, coveredAtMs: Date.now() });
+      topics.unshift({ title, coveredAtMs: Date.now() });
       setTopicTrackingStatus(`Added "${title}" to Topics covered.`, 4000);
     }).catch((error) => {
-      console.error("Could not check or save a covered topic.", error);
+      console.error("Could not save a covered topic.", error);
       setTopicTrackingStatus(error.message || "Could not update Topics covered.");
     });
+  }
+
+  const coveredTopicsReady = profileReady.then(async (ready) => {
+    if (!ready) {
+      return [];
+    }
+    try {
+      const { topics } = await getCoveredTopicContext();
+      return topics;
+    } catch (error) {
+      topicContextLoadError = error;
+      return [];
+    }
+  });
+
+  async function getTopicsForChatRequest() {
+    await coveredTopicsReady;
+    try {
+      const { topics } = await getCoveredTopicContext();
+      return topics;
+    } catch (error) {
+      topicContextLoadError = error;
+      console.error("Could not load existing covered topics.", error);
+      return [];
+    }
   }
 
   function updateChatActivityState() {
@@ -825,6 +845,10 @@ document.addEventListener("DOMContentLoaded", () => {
     clearSelectedImage();
 
     try {
+      const knownTopics = await getTopicsForChatRequest();
+      if (topicContextLoadError) {
+        setTopicTrackingStatus(`Could not load existing topics: ${topicContextLoadError.message}`);
+      }
       const requestHistory = conversation.map(({ role, content, image: messageImage }) => {
         const requestMessage = { role, content };
         if (messageImage) {
@@ -842,6 +866,7 @@ document.addEventListener("DOMContentLoaded", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [...requestHistory, { role: "user", content: messageText, ...(image ? { image: image.dataUrl } : {}) }],
+          existingTopics: knownTopics.slice(0, 100).map(({ title }) => title),
           ...(studentProfile ? { studentProfile } : {})
         }),
       });
@@ -868,6 +893,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (suggestions.length !== 3) {
         throw new Error("StudyMate couldn't prepare follow-up questions. Please try again.");
       }
+      if (data.topic !== null && typeof data.topic !== "string") {
+        throw new Error("StudyMate couldn't update your covered topics. Please try again.");
+      }
 
       thinkingMessage.remove();
       addMessage(answer.trim(), "assistant", "", true);
@@ -887,7 +915,7 @@ document.addEventListener("DOMContentLoaded", () => {
       saveActiveConversation(messageText);
       messagesAnswered += 1;
       setActivityConversation(activeChatId);
-      checkCoveredTopicInBackground(conversation);
+      saveCoveredTopicFromResponse(data.topic);
     } catch (error) {
       messagesFailed += 1;
       saveChatActivity();

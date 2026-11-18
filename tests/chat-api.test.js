@@ -39,7 +39,8 @@ test("accepts assistant history longer than the user-message limit", async (t) =
           message: {
             content: JSON.stringify({
               answer: "Here is more detail.",
-              suggestions: ["Show another example?", "Can we try a practice problem?", "How does this work in real life?"]
+              suggestions: ["Show another example?", "Can we try a practice problem?", "How does this work in real life?"],
+              topic: "Linear equations"
             })
           }
         }]
@@ -54,16 +55,19 @@ test("accepts assistant history longer than the user-message limit", async (t) =
       { role: "assistant", content: "x".repeat(5000) },
       { role: "user", content: "Can you explain that another way?" }
     ],
+    existingTopics: ["Linear equations", "Fractions"],
     studentProfile: { displayName: "Alex", grade: "Grade 9" }
   }, response);
 
   assert.equal(response.statusCode, 200);
   assert.deepEqual(response.data, {
     answer: "Here is more detail.",
-    suggestions: ["Show another example?", "Can we try a practice problem?", "How does this work in real life?"]
+    suggestions: ["Show another example?", "Can we try a practice problem?", "How does this work in real life?"],
+    topic: "Linear equations"
   });
   assert.equal(upstreamBody.response_format.type, "json_object");
-  assert.equal(upstreamBody.messages[3].content.length, 5000);
+  assert.ok(upstreamBody.messages.some((message) => message.content.includes(JSON.stringify(["Linear equations", "Fractions"]))));
+  assert.equal(upstreamBody.messages.find((message) => message.role === "assistant").content.length, 5000);
   assert.match(upstreamBody.messages[1].content, /Alex/);
   assert.match(upstreamBody.messages[1].content, /Grade 9/);
 });
@@ -89,6 +93,55 @@ test("rejects unsupported student profile grades", async () => {
   assert.deepEqual(response.data, { error: "The student profile is invalid. Add a display name and a grade from 1 to 12." });
 });
 
+test("rejects invalid existing-topic context", async () => {
+  const response = createResponse();
+  await handleChatBody({
+    messages: [{ role: "user", content: "Explain fractions." }],
+    existingTopics: ["x".repeat(101)]
+  }, response);
+
+  assert.equal(response.statusCode, 400);
+  assert.deepEqual(response.data, { error: "The existing topic list is invalid." });
+});
+
+test("returns a null topic for a response without a clear learning topic", async (t) => {
+  const originalFetch = global.fetch;
+  const originalApiKey = process.env.GROQ_API_KEY;
+  t.after(() => {
+    global.fetch = originalFetch;
+    if (originalApiKey === undefined) {
+      delete process.env.GROQ_API_KEY;
+    } else {
+      process.env.GROQ_API_KEY = originalApiKey;
+    }
+  });
+  process.env.GROQ_API_KEY = "test-key";
+  global.fetch = async () => ({
+    ok: true,
+    status: 200,
+    json: async () => ({
+      choices: [{
+        message: {
+          content: JSON.stringify({
+            answer: "You're welcome!",
+            suggestions: ["Can I help with something else?", "Want to review a topic?", "Ready for another question?"],
+            topic: null
+          })
+        }
+      }]
+    })
+  });
+
+  const response = createResponse();
+  await handleChatBody({
+    messages: [{ role: "user", content: "Thanks!" }],
+    existingTopics: []
+  }, response);
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.data.topic, null);
+});
+
 test("rejects AI replies without three valid follow-up suggestions", async (t) => {
   const originalFetch = global.fetch;
   const originalApiKey = process.env.GROQ_API_KEY;
@@ -107,7 +160,7 @@ test("rejects AI replies without three valid follow-up suggestions", async (t) =
     json: async () => ({
       choices: [{
         message: {
-          content: JSON.stringify({ answer: "Here's an explanation.", suggestions: ["Try an example?"] })
+          content: JSON.stringify({ answer: "Here's an explanation.", suggestions: ["Try an example?"], topic: null })
         }
       }]
     })

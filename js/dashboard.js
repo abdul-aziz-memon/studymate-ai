@@ -27,6 +27,23 @@ const gamesLeaderboard = document.getElementById("games-leaderboard");
 const gamesLeaderboardEmpty = document.getElementById("games-leaderboard-empty");
 const topicsLeaderboard = document.getElementById("topics-leaderboard");
 const topicsLeaderboardEmpty = document.getElementById("topics-leaderboard-empty");
+const sampleLeaderboardEntries = [
+  { id: "sample-liam-carter", displayName: "Liam Carter", gameWins: 17, topicCount: 8, isSample: true },
+  { id: "sample-noah-bennett", displayName: "Noah Bennett", gameWins: 12, topicCount: 16, isSample: true },
+  { id: "sample-ethan-brooks", displayName: "Ethan Brooks", gameWins: 8, topicCount: 14, isSample: true },
+  { id: "sample-mateo-rivera", displayName: "Mateo Rivera", gameWins: 19, topicCount: 11, isSample: true },
+  { id: "sample-aiden-foster", displayName: "Aiden Foster", gameWins: 10, topicCount: 20, isSample: true },
+  { id: "sample-arjun-shah", displayName: "Arjun Shah", gameWins: 15, topicCount: 7, isSample: true },
+  { id: "sample-caleb-turner", displayName: "Caleb Turner", gameWins: 5, topicCount: 13, isSample: true },
+  { id: "sample-owen-parker", displayName: "Owen Parker", gameWins: 13, topicCount: 4, isSample: true },
+  { id: "sample-emma-hayes", displayName: "Emma Hayes", gameWins: 18, topicCount: 17, isSample: true },
+  { id: "sample-ava-patel", displayName: "Ava Patel", gameWins: 9, topicCount: 12, isSample: true },
+  { id: "sample-mia-cooper", displayName: "Mia Cooper", gameWins: 7, topicCount: 19, isSample: true },
+  { id: "sample-sofia-reed", displayName: "Sofia Reed", gameWins: 14, topicCount: 6, isSample: true },
+  { id: "sample-layla-khan", displayName: "Layla Khan", gameWins: 11, topicCount: 15, isSample: true },
+  { id: "sample-zoe-morgan", displayName: "Zoe Morgan", gameWins: 20, topicCount: 10, isSample: true },
+  { id: "sample-isla-bennett", displayName: "Isla Bennett", gameWins: 6, topicCount: 18, isSample: true }
+];
 
 document.addEventListener("studymate:profile-updated", (event) => {
   const name = event.detail?.displayName;
@@ -199,42 +216,60 @@ function renderCoveredTopics(topics) {
   });
 }
 
-function renderLeaderboardList(list, emptyMessage, entries, scoreKey, singularScoreLabel, pluralScoreLabel) {
+function renderLeaderboardList(list, emptyMessage, entries, scoreKey, singularScoreLabel, pluralScoreLabel, currentUserId) {
   const rankedEntries = entries
-    .filter((entry) => entry[scoreKey] > 0)
+    .filter((entry) => entry[scoreKey] > 0 || entry.id === currentUserId)
     .sort((first, second) => (
       second[scoreKey] - first[scoreKey]
       || first.displayName.localeCompare(second.displayName)
-    ))
-    .slice(0, 10);
+    ));
 
   list.replaceChildren();
   emptyMessage.hidden = rankedEntries.length > 0;
   rankedEntries.forEach((entry, index) => {
     const row = document.createElement("li");
-    row.className = "leaderboard-entry";
+    const isCurrentUser = entry.id === currentUserId;
+    row.className = `leaderboard-entry${isCurrentUser ? " leaderboard-entry-current" : ""}${entry.isSample ? " leaderboard-entry-sample" : ""}`;
 
     const rank = document.createElement("span");
     rank.className = "leaderboard-rank";
+    if (index < 3) {
+      rank.classList.add(`leaderboard-rank-${index + 1}`);
+    }
     rank.textContent = String(index + 1);
     rank.setAttribute("aria-label", `Rank ${index + 1}`);
 
+    const identity = document.createElement("span");
+    identity.className = "leaderboard-identity";
     const name = document.createElement("strong");
     name.className = "leaderboard-name";
     name.textContent = entry.displayName;
+    identity.append(name);
+
+    if (isCurrentUser || entry.isSample) {
+      const badge = document.createElement("span");
+      badge.className = `leaderboard-badge${isCurrentUser ? " leaderboard-badge-current" : ""}`;
+      badge.textContent = isCurrentUser ? "YOU" : "SAMPLE";
+      identity.append(badge);
+    }
 
     const score = document.createElement("span");
     score.className = "leaderboard-score";
     score.textContent = `${entry[scoreKey]} ${entry[scoreKey] === 1 ? singularScoreLabel : pluralScoreLabel}`;
 
-    row.append(rank, name, score);
+    row.append(rank, identity, score);
     list.append(row);
   });
 }
 
-function renderLeaderboards(entries) {
-  renderLeaderboardList(gamesLeaderboard, gamesLeaderboardEmpty, entries, "gameWins", "win", "wins");
-  renderLeaderboardList(topicsLeaderboard, topicsLeaderboardEmpty, entries, "topicCount", "topic", "topics");
+function renderLeaderboards(entries, currentUserEntry) {
+  const leaderboardEntries = [
+    ...sampleLeaderboardEntries,
+    ...entries.filter((entry) => entry.id !== currentUserEntry.id),
+    currentUserEntry
+  ];
+  renderLeaderboardList(gamesLeaderboard, gamesLeaderboardEmpty, leaderboardEntries, "gameWins", "win", "wins", currentUserEntry.id);
+  renderLeaderboardList(topicsLeaderboard, topicsLeaderboardEmpty, leaderboardEntries, "topicCount", "topic", "topics", currentUserEntry.id);
 }
 
 if (!auth) {
@@ -299,13 +334,23 @@ if (!auth) {
       updateError = new Error("Your activity data could not be loaded.");
     }
 
+    const currentUserEntry = {
+      id: user.uid,
+      displayName: name,
+      gameWins: activityResult.status === "fulfilled"
+        ? activityResult.value.filter((record) => record.type === "game" && record.outcome === "win").length
+        : 0,
+      topicCount: topicsResult.status === "fulfilled" ? topicsResult.value.length : 0
+    };
+
     try {
-      renderLeaderboards(await loadLeaderboardEntries());
+      renderLeaderboards(await loadLeaderboardEntries(), currentUserEntry);
       leaderboardMessage.textContent = updateError
         ? `Your ranking may be out of date: ${updateError.message}`
         : "";
     } catch (error) {
       console.error("Could not load leaderboards.", error);
+      renderLeaderboards([], currentUserEntry);
       leaderboardMessage.textContent = `Could not load leaderboards: ${error.message}`;
     }
   }, (error) => {

@@ -797,7 +797,7 @@ document.addEventListener("DOMContentLoaded", () => {
     imageButton.disabled = sending;
     removeImageButton.disabled = sending;
     sendButton.disabled = sending;
-    promptChips.forEach((chip) => {
+    promptSuggestions.querySelectorAll("button[data-prompt]").forEach((chip) => {
       chip.disabled = sending;
     });
     newChatButton.disabled = sending;

@@ -4,6 +4,7 @@ import {
   loadActivityRecords,
   loadCoveredTopics,
   loadLeaderboardEntries,
+  getStudyTimeSeconds,
   updateLeaderboardEntry
 } from "./activity.js";
 import { getUserProfile, isCompleteUserProfile } from "./user-profile.js";
@@ -27,22 +28,38 @@ const gamesLeaderboard = document.getElementById("games-leaderboard");
 const gamesLeaderboardEmpty = document.getElementById("games-leaderboard-empty");
 const topicsLeaderboard = document.getElementById("topics-leaderboard");
 const topicsLeaderboardEmpty = document.getElementById("topics-leaderboard-empty");
+const studyTimeLeaderboard = document.getElementById("study-time-leaderboard");
+const studyTimeLeaderboardEmpty = document.getElementById("study-time-leaderboard-empty");
+const activeLeaderboardTitle = document.getElementById("active-leaderboard-title");
+const leaderboardJumpButton = document.getElementById("leaderboard-jump-to-me");
+const leaderboardSwitchButtons = document.querySelectorAll(".leaderboard-switch-button");
+const leaderboardPanels = {
+  games: document.getElementById("games-leaderboard-panel"),
+  topics: document.getElementById("topics-leaderboard-panel"),
+  "study-time": document.getElementById("study-time-leaderboard-panel")
+};
+const leaderboardTitles = {
+  games: "Games leaderboard",
+  topics: "Topics leaderboard",
+  "study-time": "Study time leaderboard"
+};
+let activeLeaderboard = "games";
 const sampleLeaderboardEntries = [
-  { id: "sample-liam-carter", displayName: "Liam Carter", gameWins: 17, topicCount: 8 },
-  { id: "sample-noah-bennett", displayName: "Noah Bennett", gameWins: 12, topicCount: 16 },
-  { id: "sample-ethan-brooks", displayName: "Ethan Brooks", gameWins: 8, topicCount: 14 },
-  { id: "sample-mateo-rivera", displayName: "Mateo Rivera", gameWins: 19, topicCount: 11 },
-  { id: "sample-aiden-foster", displayName: "Aiden Foster", gameWins: 10, topicCount: 20 },
-  { id: "sample-arjun-shah", displayName: "Arjun Shah", gameWins: 15, topicCount: 7 },
-  { id: "sample-caleb-turner", displayName: "Caleb Turner", gameWins: 5, topicCount: 13 },
-  { id: "sample-owen-parker", displayName: "Owen Parker", gameWins: 13, topicCount: 4 },
-  { id: "sample-emma-hayes", displayName: "Emma Hayes", gameWins: 18, topicCount: 17 },
-  { id: "sample-ava-patel", displayName: "Ava Patel", gameWins: 9, topicCount: 12 },
-  { id: "sample-mia-cooper", displayName: "Mia Cooper", gameWins: 7, topicCount: 19 },
-  { id: "sample-sofia-reed", displayName: "Sofia Reed", gameWins: 14, topicCount: 6 },
-  { id: "sample-layla-khan", displayName: "Layla Khan", gameWins: 11, topicCount: 15 },
-  { id: "sample-zoe-morgan", displayName: "Zoe Morgan", gameWins: 20, topicCount: 10 },
-  { id: "sample-isla-bennett", displayName: "Isla Bennett", gameWins: 6, topicCount: 18 }
+  { id: "sample-liam-carter", displayName: "Liam Carter", gameWins: 17, topicCount: 8, studySeconds: 900 },
+  { id: "sample-noah-bennett", displayName: "Noah Bennett", gameWins: 12, topicCount: 16, studySeconds: 600 },
+  { id: "sample-ethan-brooks", displayName: "Ethan Brooks", gameWins: 8, topicCount: 14, studySeconds: 1250 },
+  { id: "sample-mateo-rivera", displayName: "Mateo Rivera", gameWins: 19, topicCount: 11, studySeconds: 1800 },
+  { id: "sample-aiden-foster", displayName: "Aiden Foster", gameWins: 10, topicCount: 20, studySeconds: 2100 },
+  { id: "sample-arjun-shah", displayName: "Arjun Shah", gameWins: 15, topicCount: 7, studySeconds: 500 },
+  { id: "sample-caleb-turner", displayName: "Caleb Turner", gameWins: 5, topicCount: 13, studySeconds: 3000 },
+  { id: "sample-owen-parker", displayName: "Owen Parker", gameWins: 13, topicCount: 4, studySeconds: 100 },
+  { id: "sample-emma-hayes", displayName: "Emma Hayes", gameWins: 18, topicCount: 17, studySeconds: 3600 },
+  { id: "sample-ava-patel", displayName: "Ava Patel", gameWins: 9, topicCount: 12, studySeconds: 1450 },
+  { id: "sample-mia-cooper", displayName: "Mia Cooper", gameWins: 7, topicCount: 19, studySeconds: 725 },
+  { id: "sample-sofia-reed", displayName: "Sofia Reed", gameWins: 14, topicCount: 6, studySeconds: 2400 },
+  { id: "sample-layla-khan", displayName: "Layla Khan", gameWins: 11, topicCount: 15, studySeconds: 1800 },
+  { id: "sample-zoe-morgan", displayName: "Zoe Morgan", gameWins: 20, topicCount: 10, studySeconds: 3290 },
+  { id: "sample-isla-bennett", displayName: "Sir Studies-a-Lot", gameWins: 6, topicCount: 18, studySeconds: 6600 }
 ];
 
 document.addEventListener("studymate:profile-updated", (event) => {
@@ -260,7 +277,9 @@ function renderLeaderboardList(list, emptyMessage, entries, scoreKey, singularSc
 
     const score = document.createElement("span");
     score.className = "leaderboard-score";
-    score.textContent = `${entry[scoreKey]} ${entry[scoreKey] === 1 ? singularScoreLabel : pluralScoreLabel}`;
+    score.textContent = scoreKey === "studySeconds"
+      ? `${new Intl.NumberFormat().format(entry[scoreKey])} sec`
+      : `${entry[scoreKey]} ${entry[scoreKey] === 1 ? singularScoreLabel : pluralScoreLabel}`;
 
     row.append(rank, identity, score);
     list.append(row);
@@ -275,7 +294,33 @@ function renderLeaderboards(entries, currentUserEntry) {
   ];
   renderLeaderboardList(gamesLeaderboard, gamesLeaderboardEmpty, leaderboardEntries, "gameWins", "win", "wins", currentUserEntry.id);
   renderLeaderboardList(topicsLeaderboard, topicsLeaderboardEmpty, leaderboardEntries, "topicCount", "topic", "topics", currentUserEntry.id);
+  renderLeaderboardList(studyTimeLeaderboard, studyTimeLeaderboardEmpty, leaderboardEntries, "studySeconds", "second", "seconds", currentUserEntry.id);
 }
+
+function showLeaderboard(boardName) {
+  if (!leaderboardPanels[boardName]) {
+    return;
+  }
+  activeLeaderboard = boardName;
+  activeLeaderboardTitle.textContent = leaderboardTitles[boardName];
+  leaderboardSwitchButtons.forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.leaderboard === boardName));
+  });
+  Object.entries(leaderboardPanels).forEach(([name, panel]) => {
+    panel.hidden = name !== boardName;
+  });
+}
+
+leaderboardSwitchButtons.forEach((button) => {
+  button.addEventListener("click", () => showLeaderboard(button.dataset.leaderboard));
+});
+
+leaderboardJumpButton.addEventListener("click", () => {
+  const currentUserRow = leaderboardPanels[activeLeaderboard].querySelector(".leaderboard-entry-current");
+  if (currentUserRow) {
+    currentUserRow.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+});
 
 if (!auth) {
   window.location.replace("login.html");
@@ -345,7 +390,8 @@ if (!auth) {
       gameWins: activityResult.status === "fulfilled"
         ? activityResult.value.filter((record) => record.type === "game" && record.outcome === "win").length
         : 0,
-      topicCount: topicsResult.status === "fulfilled" ? topicsResult.value.length : 0
+      topicCount: topicsResult.status === "fulfilled" ? topicsResult.value.length : 0,
+      studySeconds: activityResult.status === "fulfilled" ? getStudyTimeSeconds(activityResult.value) : 0
     };
 
     try {

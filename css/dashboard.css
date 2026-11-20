@@ -611,10 +611,7 @@ button {
   list-style: none;
 }
 
-.leaderboard-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
+.leaderboard-panel {
   margin-top: 22px;
 }
 
@@ -625,6 +622,53 @@ button {
   background: linear-gradient(150deg, white, color-mix(in srgb, white 86%, var(--theme-soft)));
   padding: 22px;
   box-shadow: 0 14px 34px rgb(15 23 42 / 6%);
+}
+
+.leaderboard-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.leaderboard-switch-button,
+.leaderboard-jump-button {
+  min-height: 38px;
+  border: 1px solid #dbe3ec;
+  border-radius: 10px;
+  background: white;
+  padding: 0 14px;
+  color: #475569;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 750;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.leaderboard-switch-button:hover,
+.leaderboard-jump-button:hover {
+  border-color: color-mix(in srgb, var(--theme-primary) 38%, white);
+  color: var(--theme-dark);
+}
+
+.leaderboard-switch-button[aria-pressed="true"] {
+  border-color: var(--theme-primary);
+  background: var(--theme-primary);
+  color: white;
+}
+
+.leaderboard-switch-button:focus-visible,
+.leaderboard-jump-button:focus-visible {
+  outline: 3px solid var(--theme-secondary);
+  outline-offset: 2px;
+}
+
+.leaderboard-results[hidden] {
+  display: none;
+}
+
+.leaderboard-results .leaderboard-list {
+  max-height: min(680px, 65vh);
 }
 
 .leaderboard-card-heading {
@@ -647,6 +691,12 @@ button {
   color: #1e293b;
   font-size: 17px;
   font-weight: 750;
+}
+
+.leaderboard-jump-button {
+  flex: 0 0 auto;
+  border-color: color-mix(in srgb, var(--theme-primary) 30%, white);
+  color: var(--theme-dark);
 }
 
 .leaderboard-card-heading span {
@@ -1315,10 +1365,6 @@ button {
     padding: 19px 16px;
   }
 
-  .leaderboard-grid {
-    grid-template-columns: 1fr;
-  }
-
   .next-step {
     align-items: flex-start;
     flex-direction: column;
@@ -1351,6 +1397,17 @@ button {
 
   .leaderboard-card {
     padding: 15px 12px;
+  }
+
+  .leaderboard-card-heading {
+    align-items: flex-start;
+  }
+
+  .leaderboard-switch-button,
+  .leaderboard-jump-button {
+    min-height: 36px;
+    padding: 0 10px;
+    font-size: 11px;
   }
 
   .leaderboard-entry {

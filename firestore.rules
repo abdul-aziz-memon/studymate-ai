@@ -52,8 +52,8 @@ service cloud.firestore {
     }
 
     function validLeaderboardEntry(data) {
-      return data.keys().hasOnly(['displayName', 'gameWins', 'topicCount'])
-        && data.keys().hasAll(['displayName', 'gameWins', 'topicCount'])
+      return data.keys().hasOnly(['displayName', 'gameWins', 'topicCount', 'studySeconds'])
+        && data.keys().hasAll(['displayName', 'gameWins', 'topicCount', 'studySeconds'])
         && data.displayName is string
         && data.displayName.size() > 0
         && data.displayName.size() <= 80
@@ -62,7 +62,10 @@ service cloud.firestore {
         && data.gameWins <= 1000000
         && data.topicCount is int
         && data.topicCount >= 0
-        && data.topicCount <= 1000000;
+        && data.topicCount <= 1000000
+        && data.studySeconds is int
+        && data.studySeconds >= 0
+        && data.studySeconds <= 100000000;
     }
 
     function validUserProfile(data) {

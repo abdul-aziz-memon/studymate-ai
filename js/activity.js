@@ -122,11 +122,26 @@ export async function updateLeaderboardEntry(displayName, activityRecords, topic
     throw new Error("Your display name must be between 1 and 80 characters to appear on the leaderboard.");
   }
   const gameWins = activityRecords.filter((record) => record.type === "game" && record.outcome === "win").length;
+  const studySeconds = getStudyTimeSeconds(activityRecords);
   await setDoc(doc(db, "leaderboard", user.uid), {
     displayName: name,
     gameWins,
-    topicCount: topics.length
+    topicCount: topics.length,
+    studySeconds
   });
+}
+
+export function getStudyTimeSeconds(activityRecords) {
+  return activityRecords
+    .filter((record) => record.type === "chat")
+    .reduce((total, record) => {
+      const duration = Number.isSafeInteger(record.durationSeconds) && record.durationSeconds >= 0
+        ? record.durationSeconds
+        : Number.isSafeInteger(record.durationMs) && record.durationMs >= 0
+          ? Math.floor(record.durationMs / 1000)
+          : 0;
+      return Math.min(100000000, total + duration);
+    }, 0);
 }
 
 export async function loadLeaderboardEntries() {
@@ -147,6 +162,8 @@ export async function loadLeaderboardEntries() {
       && Number.isSafeInteger(entry.topicCount)
       && entry.topicCount >= 0
       && entry.topicCount <= 1000000
+      && (entry.studySeconds === undefined
+        || (Number.isSafeInteger(entry.studySeconds) && entry.studySeconds >= 0 && entry.studySeconds <= 100000000))
     ));
 }
 

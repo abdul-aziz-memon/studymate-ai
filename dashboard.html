@@ -147,27 +147,32 @@
           <div class="dashboard-page-heading leaderboard-page-heading">
             <p class="dashboard-eyebrow">STUDY · PLAY · CLIMB</p>
             <h1 id="leaderboards-title">Leaderboards</h1>
-            <p>Celebrate game wins, growing skills, and every learner making progress.</p>
+            <p>Compare game wins, topics studied, and total study time.</p>
           </div>
-          <section class="dashboard-panel" aria-label="All-time leaderboards">
+          <section class="dashboard-panel leaderboard-panel" aria-label="All-time leaderboards">
             <p class="dashboard-message" id="leaderboard-message" role="status" aria-live="polite">Loading leaderboards...</p>
-            <div class="leaderboard-grid">
-              <section class="leaderboard-card" aria-labelledby="games-leaderboard-title">
-                <div class="leaderboard-card-heading">
-                  <h2 id="games-leaderboard-title">Games leaderboard</h2>
-                  <span>Game wins</span>
-                </div>
+            <div class="leaderboard-card">
+              <div class="leaderboard-card-heading">
+                <h2 id="active-leaderboard-title">Games leaderboard</h2>
+                <button class="leaderboard-jump-button" id="leaderboard-jump-to-me" type="button">Jump to Me</button>
+              </div>
+              <div class="leaderboard-switcher" role="group" aria-label="Choose a leaderboard">
+                <button class="leaderboard-switch-button" type="button" data-leaderboard="games" aria-pressed="true" aria-controls="games-leaderboard">Game wins</button>
+                <button class="leaderboard-switch-button" type="button" data-leaderboard="topics" aria-pressed="false" aria-controls="topics-leaderboard">Topics studied</button>
+                <button class="leaderboard-switch-button" type="button" data-leaderboard="study-time" aria-pressed="false" aria-controls="study-time-leaderboard">Study time</button>
+              </div>
+              <div class="leaderboard-results" id="games-leaderboard-panel">
                 <p class="leaderboard-empty" id="games-leaderboard-empty" hidden>No game wins recorded yet.</p>
                 <ol class="leaderboard-list" id="games-leaderboard" aria-label="Top players by game wins" aria-live="polite"></ol>
-              </section>
-              <section class="leaderboard-card" aria-labelledby="topics-leaderboard-title">
-                <div class="leaderboard-card-heading">
-                  <h2 id="topics-leaderboard-title">Chat leaderboard</h2>
-                  <span>Topics studied</span>
-                </div>
+              </div>
+              <div class="leaderboard-results" id="topics-leaderboard-panel" hidden>
                 <p class="leaderboard-empty" id="topics-leaderboard-empty" hidden>No topics studied yet.</p>
                 <ol class="leaderboard-list" id="topics-leaderboard" aria-label="Top players by topics studied" aria-live="polite"></ol>
-              </section>
+              </div>
+              <div class="leaderboard-results" id="study-time-leaderboard-panel" hidden>
+                <p class="leaderboard-empty" id="study-time-leaderboard-empty" hidden>No study time recorded yet.</p>
+                <ol class="leaderboard-list" id="study-time-leaderboard" aria-label="Top players by study time" aria-live="polite"></ol>
+              </div>
             </div>
           </section>
         </div>

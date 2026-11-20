@@ -87,7 +87,9 @@ document.addEventListener("DOMContentLoaded", () => {
   let chatSessions = [];
   let activeChatId = null;
   let savedActiveChatId = null;
+  let hasSavedActiveChatId = false;
   let isSending = false;
+  let isDeletingChat = false;
   let selectedImage = null;
   let activityTrackingEnabled = true;
   let activityView = "chat";
@@ -526,8 +528,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!Array.isArray(savedChats)) {
         throw new Error("Saved chat history has an invalid format.");
       }
-      if (!Array.isArray(parsed) && typeof parsed.activeChatId === "string") {
+      if (!Array.isArray(parsed) && Object.prototype.hasOwnProperty.call(parsed, "activeChatId")) {
         savedActiveChatId = parsed.activeChatId;
+        hasSavedActiveChatId = true;
       }
 
       const validChats = savedChats.filter((chat) => (
@@ -599,10 +602,13 @@ document.addEventListener("DOMContentLoaded", () => {
     chatHistoryEmpty.hidden = sortedChats.length > 0;
 
     sortedChats.forEach((chat) => {
+      const entry = document.createElement("div");
+      entry.className = "sidebar-chat-entry";
+
       const button = document.createElement("button");
       button.className = "sidebar-chat";
       button.type = "button";
-      button.disabled = isSending;
+      button.disabled = isSending || isDeletingChat;
       button.setAttribute("aria-current", String(chat.id === activeChatId));
       button.title = chat.title;
       button.dataset.chatId = chat.id;
@@ -615,7 +621,23 @@ document.addEventListener("DOMContentLoaded", () => {
       date.textContent = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(chat.updatedAt);
 
       button.append(title, date);
-      chatHistoryList.append(button);
+      const actions = document.createElement("div");
+      actions.className = "sidebar-chat-actions";
+
+      [["rename", "Rename chat"], ["delete", "Delete chat"]].forEach(([action, label]) => {
+        const actionButton = document.createElement("button");
+        actionButton.className = `sidebar-chat-action sidebar-chat-action-${action}`;
+        actionButton.type = "button";
+        actionButton.disabled = isSending || isDeletingChat;
+        actionButton.dataset.chatId = chat.id;
+        actionButton.dataset.chatAction = action;
+        actionButton.setAttribute("aria-label", `${label}: ${chat.title}`);
+        actionButton.textContent = action === "rename" ? "Rename" : "Delete";
+        actions.append(actionButton);
+      });
+
+      entry.append(button, actions);
+      chatHistoryList.append(entry);
     });
   }
 
@@ -667,7 +689,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function openChat(chatId) {
-    if (isSending) {
+    if (isSending || isDeletingChat) {
       return;
     }
     const chat = chatSessions.find((session) => session.id === chatId);
@@ -686,19 +708,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function createNewChat() {
-    if (isSending) {
+    if (isSending || isDeletingChat) {
       return;
     }
-    const chat = {
-      id: createChatId(),
-      title: "New chat",
-      updatedAt: Date.now(),
-      messages: [],
-    };
-    chatSessions.unshift(chat);
-    activeChatId = chat.id;
-    setActivityConversation(chat.id);
-    conversation = chat.messages;
+    activeChatId = null;
+    activityConversationId = null;
+    conversation = [];
     clearSelectedImage();
     chatInput.value = "";
     renderChatHistory();
@@ -706,6 +721,87 @@ document.addEventListener("DOMContentLoaded", () => {
     saveChatSessions();
     closeSidebarOnMobile();
     chatInput.focus();
+  }
+
+  function renameChat(chatId) {
+    const chat = chatSessions.find((session) => session.id === chatId);
+    if (!chat || isSending || isDeletingChat) {
+      return;
+    }
+
+    const title = window.prompt("Enter a new name for this chat:", chat.title);
+    if (title === null) {
+      return;
+    }
+    const trimmedTitle = title.trim().replace(/\s+/g, " ");
+    if (!trimmedTitle || trimmedTitle.length > 80) {
+      chatHistoryStatus.textContent = "Chat names must be between 1 and 80 characters.";
+      return;
+    }
+
+    chat.title = trimmedTitle;
+    saveChatSessions();
+    renderChatHistory();
+  }
+
+  async function deleteChat(chatId) {
+    const chat = chatSessions.find((session) => session.id === chatId);
+    if (!chat || isSending || isDeletingChat) {
+      return;
+    }
+    if (!window.confirm(`Delete "${chat.title}"? This permanently removes the conversation.`)) {
+      return;
+    }
+
+    isDeletingChat = true;
+    newChatButton.disabled = true;
+    renderChatHistory();
+    chatHistoryStatus.textContent = "";
+    try {
+      await activityWriteQueue.catch((error) => {
+        console.error("Could not finish saving chat activity before deletion.", error);
+      });
+      const { activity, error } = await activityApiPromise;
+      if (error) {
+        throw new Error("Chat activity could not load from Firebase. Refresh the page and try again.");
+      }
+      await activity.deleteChatActivity(chatId);
+
+      chatSessions = chatSessions.filter((session) => session.id !== chatId);
+      if (activeChatId === chatId) {
+        const nextChat = [...chatSessions].sort((first, second) => second.updatedAt - first.updatedAt)[0];
+        activeChatId = nextChat?.id || null;
+        conversation = nextChat?.messages || [];
+        clearSelectedImage();
+        chatInput.value = "";
+      }
+
+      activitySessionId = createActivityId();
+      activityConversationId = null;
+      activityConversationIds.clear();
+      messagesSent = 0;
+      messagesAnswered = 0;
+      messagesFailed = 0;
+      activityStartedAtMs = Date.now();
+      activityElapsedMs = 0;
+      activityLastTick = performance.now();
+      lastActivitySnapshot = "";
+      saveChatSessions();
+      renderChatHistory();
+      renderConversation();
+      if (activeChatId) {
+        setActivityConversation(activeChatId);
+      } else {
+        saveChatActivity();
+      }
+    } catch (error) {
+      console.error("Could not delete the chat and its activity data.", error);
+      chatHistoryStatus.textContent = `Could not delete this chat: ${error.message}`;
+    } finally {
+      isDeletingChat = false;
+      newChatButton.disabled = isSending;
+      renderChatHistory();
+    }
   }
 
   function saveActiveConversation(firstQuestion) {
@@ -820,7 +916,7 @@ document.addEventListener("DOMContentLoaded", () => {
     promptSuggestions.querySelectorAll("button[data-prompt]").forEach((chip) => {
       chip.disabled = sending;
     });
-    newChatButton.disabled = sending;
+    newChatButton.disabled = sending || isDeletingChat;
     chatHistoryList.querySelectorAll("button").forEach((button) => {
       button.disabled = sending;
     });
@@ -979,6 +1075,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   chatHistoryList.addEventListener("click", (event) => {
     const target = event.target instanceof Element ? event.target : null;
+    const actionButton = target?.closest("button[data-chat-action]");
+    if (actionButton) {
+      if (actionButton.dataset.chatAction === "rename") {
+        renameChat(actionButton.dataset.chatId);
+      } else if (actionButton.dataset.chatAction === "delete") {
+        deleteChat(actionButton.dataset.chatId);
+      }
+      return;
+    }
     const button = target?.closest("button[data-chat-id]");
     if (button) {
       openChat(button.dataset.chatId);
@@ -1004,12 +1109,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   chatSessions = loadChatSessions();
   chatSessions.sort((first, second) => second.updatedAt - first.updatedAt);
-  if (chatSessions.length) {
+  if (chatSessions.length && (!hasSavedActiveChatId || savedActiveChatId !== null)) {
     activeChatId = chatSessions.some((chat) => chat.id === savedActiveChatId)
       ? savedActiveChatId
       : chatSessions[0].id;
-    setActivityConversation(activeChatId);
-    conversation = getActiveChat().messages;
+    if (activeChatId) {
+      setActivityConversation(activeChatId);
+      conversation = getActiveChat().messages;
+    }
   }
   if (window.matchMedia("(max-width: 700px)").matches) {
     setSidebarOpen(false);

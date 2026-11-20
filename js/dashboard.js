@@ -128,8 +128,13 @@ function getActivityDescription(record) {
 }
 
 function renderActivity(records) {
-  const games = records.filter((record) => record.type === "game");
-  const chats = records.filter((record) => record.type === "chat");
+  const visibleRecords = records.filter((record) => (
+    record.type !== "chat"
+    || (Array.isArray(record.conversationIds) && record.conversationIds.length > 0)
+    || Boolean(record.conversationId)
+  ));
+  const games = visibleRecords.filter((record) => record.type === "game");
+  const chats = visibleRecords.filter((record) => record.type === "chat");
   const wins = games.filter((record) => record.outcome === "win").length;
   const losses = games.filter((record) => record.outcome === "loss").length;
   const draws = games.filter((record) => record.outcome === "draw").length;
@@ -156,7 +161,7 @@ function renderActivity(records) {
   document.getElementById("chat-time").textContent = `${chatSeconds} sec`;
   document.getElementById("chat-sessions").textContent = String(conversationIds.size);
 
-  const sortedRecords = [...records].sort((first, second) => (second.startedAtMs || 0) - (first.startedAtMs || 0));
+  const sortedRecords = [...visibleRecords].sort((first, second) => (second.startedAtMs || 0) - (first.startedAtMs || 0));
   activityList.replaceChildren();
   activityEmpty.hidden = sortedRecords.length > 0;
 

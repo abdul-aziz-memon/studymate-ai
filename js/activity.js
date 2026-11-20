@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, deleteDoc, doc, getDocs, query, serverTimestamp, setDoc, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { auth, db } from "./firebase.js";
 
@@ -66,6 +66,31 @@ export async function loadActivityRecords() {
   const user = await getSignedInUser();
   const snapshot = await getDocs(collection(db, "users", user.uid, "activity"));
   return snapshot.docs.map((activity) => ({ id: activity.id, ...activity.data() }));
+}
+
+export async function deleteChatActivity(conversationId) {
+  if (!db) {
+    throw new Error("Firebase is not configured, so chat activity cannot be deleted.");
+  }
+  if (typeof conversationId !== "string" || !conversationId) {
+    throw new Error("The conversation to delete is invalid.");
+  }
+
+  const user = await getSignedInUser();
+  const activityCollection = collection(db, "users", user.uid, "activity");
+  const snapshots = await Promise.all([
+    getDocs(query(activityCollection, where("conversationId", "==", conversationId))),
+    getDocs(query(activityCollection, where("conversationIds", "array-contains", conversationId)))
+  ]);
+  const matchingRecords = new Map();
+  snapshots.forEach((snapshot) => {
+    snapshot.docs.forEach((activity) => {
+      if (activity.data().type === "chat") {
+        matchingRecords.set(activity.id, activity);
+      }
+    });
+  });
+  await Promise.all([...matchingRecords.values()].map((activity) => deleteDoc(activity.ref)));
 }
 
 export async function loadCoveredTopics() {

@@ -743,6 +743,8 @@ document.addEventListener("DOMContentLoaded", () => {
     chatDialogAction = action;
     chatDialogChatId = chatId;
     chatDialogError.textContent = "";
+    chatDialogCancel.disabled = false;
+    chatDialogSubmit.disabled = false;
     chatDialogName.removeAttribute("aria-invalid");
     chatDialogRenameField.hidden = action !== "rename";
     chatDialogTitle.textContent = action === "rename" ? "Rename chat" : "Delete chat?";

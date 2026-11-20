@@ -256,6 +256,22 @@
               </form>
             </section>
 
+            <section class="settings-form settings-danger-zone" aria-labelledby="delete-account-title">
+              <h3 id="delete-account-title">Delete account</h3>
+              <p class="settings-note">Permanently delete your account, saved chats on this browser, profile, study activity, topics, and leaderboard entry. This cannot be undone.</p>
+              <form id="delete-account-form" class="settings-fields">
+                <label for="delete-account-confirmation">Type DELETE to confirm</label>
+                <input id="delete-account-confirmation" name="confirmation" type="text" autocomplete="off" required>
+                <div id="delete-account-password-field">
+                  <label for="delete-account-password">Current password</label>
+                  <input id="delete-account-password" name="password" type="password" autocomplete="current-password" minlength="6" required>
+                </div>
+                <p id="delete-account-provider-note" class="settings-note" hidden>You’ll be asked to confirm your identity with Google before deletion.</p>
+                <p id="delete-account-feedback" class="settings-feedback" role="status" aria-live="polite"></p>
+                <button id="delete-account-button" class="settings-delete-button" type="submit">Delete my account and data</button>
+              </form>
+            </section>
+
             <button id="settings-logout-button" class="settings-logout-button" type="button">Log out</button>
             <p id="logout-feedback" class="settings-feedback" role="status" aria-live="polite"></p>
           </section>

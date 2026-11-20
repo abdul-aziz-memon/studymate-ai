@@ -81,7 +81,7 @@ The function accepts up to 40 messages, limits user messages to 4,000 characters
 
 ### Privacy and usage
 
-The deployed chat and topic-check endpoints are public. For signed-in users, chat requests include their display name and grade so Groq can personalize explanations; the grade is stored in the user's private Firestore profile and is not shown on leaderboards. Each successful answer also triggers an additional Groq request in the background using up to six recent text messages and existing topic labels; image attachments are not included in this topic-check request. Only newly identified topic labels are saved to Firestore. Messages and attached images are sent to Groq to generate answers. Leaderboards show account display names and scores to signed-in users; scores are summaries computed in the browser from the user's activity records and are not tamper-proof. Do not send passwords, sensitive personal information, or other private material. Check your Groq account’s usage limits and Vercel traffic controls to help prevent unexpected usage.
+The deployed chat and topic-check endpoints are public. For signed-in users, chat requests include their display name and grade so Groq can personalize explanations; the grade is stored in the user's private Firestore profile and is not shown on leaderboards. Chat transcripts are saved in the current browser's local storage; they are not saved to Firestore. Each successful answer also triggers an additional Groq request in the background using up to six recent text messages and existing topic labels; image attachments are not included in this topic-check request. Only newly identified topic labels are saved to Firestore. Messages and attached images are sent to Groq to generate answers. Leaderboards show account display names and scores to signed-in users; scores are summaries computed in the browser from the user's activity records and are not tamper-proof. The **Delete account** option in chat settings removes the signed-in Firebase account and its Firestore profile, activity, topics, and leaderboard entry, and clears chat transcripts from the current browser. It does not clear local chat history stored in other browsers or devices. Do not send passwords, sensitive personal information, or other private material. Check your Groq account’s usage limits and Vercel traffic controls to help prevent unexpected usage.
 
 ## Project structure 🗂️
 
@@ -115,6 +115,7 @@ studymate-ai/
     ├── user-profile.js  # Private display-name and grade profile
     ├── account.js       # Required profile setup flow
     ├── chat.js          # Chat UI, image preparation, and background topic checks
+    ├── chat-storage.js  # Shared browser chat-history storage key
     ├── dashboard.js     # Firebase-backed activity and leaderboard dashboard
     ├── firebase.js      # Shared Firebase Auth and Firestore setup
     ├── games.js         # Games and game activity tracking

@@ -1,7 +1,7 @@
 import { isCompleteUserProfile, loadCurrentUserProfile } from "./user-profile.js";
+import { CHAT_HISTORY_STORAGE_KEY } from "./chat-storage.js";
 
 const chatEndpoint = "/api/chat";
-const chatHistoryStorageKey = "studymate-chat-history-v1";
 const activityApiPromise = import("./activity.js").then(
   (activity) => ({ activity }),
   (error) => ({ error })
@@ -529,7 +529,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function loadChatSessions() {
     try {
-      const saved = localStorage.getItem(chatHistoryStorageKey);
+      const saved = localStorage.getItem(CHAT_HISTORY_STORAGE_KEY);
       if (!saved) {
         return [];
       }
@@ -600,7 +600,7 @@ document.addEventListener("DOMContentLoaded", () => {
           return message;
         }),
       }));
-      localStorage.setItem(chatHistoryStorageKey, JSON.stringify({ activeChatId, chats: savedChats }));
+      localStorage.setItem(CHAT_HISTORY_STORAGE_KEY, JSON.stringify({ activeChatId, chats: savedChats }));
       chatHistoryStatus.textContent = "";
     } catch {
       chatHistoryStatus.textContent = "Chat history couldn't be saved in this browser.";

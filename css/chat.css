@@ -1444,6 +1444,45 @@ body {
   background: #fee2e2;
 }
 
+.settings-danger-zone {
+  border-top-color: #fecaca;
+}
+
+.settings-danger-zone h3 {
+  color: #b91c1c;
+}
+
+.settings-danger-zone #delete-account-password-field {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.settings-danger-zone #delete-account-password-field[hidden] {
+  display: none;
+}
+
+.settings-delete-button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 0.7rem;
+  padding: 0.55rem 0.85rem;
+  background: #b91c1c;
+  color: white;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.settings-delete-button:hover:not(:disabled) {
+  background: #991b1b;
+}
+
+.settings-delete-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .settings-primary-button:disabled,
 .settings-logout-button:disabled {
   cursor: wait;

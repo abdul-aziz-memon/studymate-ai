@@ -88,6 +88,23 @@
     </aside>
     <button id="sidebar-backdrop" class="sidebar-backdrop" type="button" aria-label="Close chat sidebar" tabindex="-1"></button>
 
+    <dialog id="chat-action-dialog" class="chat-action-dialog" aria-labelledby="chat-dialog-title" aria-describedby="chat-dialog-description">
+      <form id="chat-dialog-form" class="chat-dialog-form">
+        <p class="chat-dialog-eyebrow">CONVERSATION</p>
+        <h2 id="chat-dialog-title">Rename chat</h2>
+        <p id="chat-dialog-description" class="chat-dialog-description"></p>
+        <div id="chat-dialog-rename-field" class="chat-dialog-field" hidden>
+          <label for="chat-dialog-name">Chat name</label>
+          <input id="chat-dialog-name" type="text" maxlength="80" autocomplete="off">
+        </div>
+        <p id="chat-dialog-error" class="chat-dialog-error" role="alert" aria-live="polite"></p>
+        <div class="chat-dialog-actions">
+          <button id="chat-dialog-cancel" class="chat-dialog-cancel" type="button">Cancel</button>
+          <button id="chat-dialog-submit" class="chat-dialog-submit" type="submit">Save changes</button>
+        </div>
+      </form>
+    </dialog>
+
     <section class="chat-main" aria-label="StudyMate AI chat">
       <div class="chat-toolbar">
         <button id="sidebar-toggle-button" class="sidebar-toggle-button" type="button" aria-label="Close chat sidebar" aria-expanded="true" aria-controls="chat-history-list">

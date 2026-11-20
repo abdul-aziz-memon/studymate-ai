@@ -63,6 +63,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const chatHistoryList = document.getElementById("chat-history-list");
   const chatHistoryEmpty = document.getElementById("chat-history-empty");
   const chatHistoryStatus = document.getElementById("chat-history-status");
+  const chatActionDialog = document.getElementById("chat-action-dialog");
+  const chatDialogForm = document.getElementById("chat-dialog-form");
+  const chatDialogTitle = document.getElementById("chat-dialog-title");
+  const chatDialogDescription = document.getElementById("chat-dialog-description");
+  const chatDialogRenameField = document.getElementById("chat-dialog-rename-field");
+  const chatDialogName = document.getElementById("chat-dialog-name");
+  const chatDialogError = document.getElementById("chat-dialog-error");
+  const chatDialogCancel = document.getElementById("chat-dialog-cancel");
+  const chatDialogSubmit = document.getElementById("chat-dialog-submit");
   const activitySaveStatus = document.getElementById("activity-save-status");
   const topicTrackingStatus = document.getElementById("topic-tracking-status");
   let studentProfile = null;
@@ -88,6 +97,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let activeChatId = null;
   let savedActiveChatId = null;
   let hasSavedActiveChatId = false;
+  let chatDialogAction = null;
+  let chatDialogChatId = null;
   let isSending = false;
   let isDeletingChat = false;
   let selectedImage = null;
@@ -723,34 +734,36 @@ document.addEventListener("DOMContentLoaded", () => {
     chatInput.focus();
   }
 
-  function renameChat(chatId) {
+  function openChatActionDialog(action, chatId) {
     const chat = chatSessions.find((session) => session.id === chatId);
     if (!chat || isSending || isDeletingChat) {
       return;
     }
 
-    const title = window.prompt("Enter a new name for this chat:", chat.title);
-    if (title === null) {
-      return;
+    chatDialogAction = action;
+    chatDialogChatId = chatId;
+    chatDialogError.textContent = "";
+    chatDialogName.removeAttribute("aria-invalid");
+    chatDialogRenameField.hidden = action !== "rename";
+    chatDialogTitle.textContent = action === "rename" ? "Rename chat" : "Delete chat?";
+    chatDialogDescription.textContent = action === "rename"
+      ? "Choose a name that will help you find this conversation later."
+      : `Delete "${chat.title}"? This permanently removes the conversation and its activity data.`;
+    chatDialogName.value = action === "rename" ? chat.title : "";
+    chatDialogSubmit.textContent = action === "rename" ? "Save changes" : "Delete chat";
+    chatDialogSubmit.classList.toggle("chat-dialog-submit-delete", action === "delete");
+    chatActionDialog.showModal();
+    if (action === "rename") {
+      requestAnimationFrame(() => chatDialogName.focus());
+    } else {
+      chatDialogCancel.focus();
     }
-    const trimmedTitle = title.trim().replace(/\s+/g, " ");
-    if (!trimmedTitle || trimmedTitle.length > 80) {
-      chatHistoryStatus.textContent = "Chat names must be between 1 and 80 characters.";
-      return;
-    }
-
-    chat.title = trimmedTitle;
-    saveChatSessions();
-    renderChatHistory();
   }
 
   async function deleteChat(chatId) {
     const chat = chatSessions.find((session) => session.id === chatId);
     if (!chat || isSending || isDeletingChat) {
-      return;
-    }
-    if (!window.confirm(`Delete "${chat.title}"? This permanently removes the conversation.`)) {
-      return;
+      return false;
     }
 
     isDeletingChat = true;
@@ -794,15 +807,69 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         saveChatActivity();
       }
+      return true;
     } catch (error) {
       console.error("Could not delete the chat and its activity data.", error);
-      chatHistoryStatus.textContent = `Could not delete this chat: ${error.message}`;
+      chatDialogError.textContent = `Could not delete this chat: ${error.message}`;
+      return false;
     } finally {
       isDeletingChat = false;
       newChatButton.disabled = isSending;
       renderChatHistory();
     }
   }
+
+  chatDialogForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!chatDialogAction || !chatDialogChatId) {
+      return;
+    }
+
+    if (chatDialogAction === "rename") {
+      const chat = chatSessions.find((session) => session.id === chatDialogChatId);
+      const title = chatDialogName.value.trim().replace(/\s+/g, " ");
+      if (!title || title.length > 80) {
+        chatDialogError.textContent = "Chat names must be between 1 and 80 characters.";
+        chatDialogName.setAttribute("aria-invalid", "true");
+        chatDialogName.focus();
+        return;
+      }
+      if (chat) {
+        chat.title = title;
+        saveChatSessions();
+        renderChatHistory();
+      }
+      chatActionDialog.close();
+      return;
+    }
+
+    chatDialogCancel.disabled = true;
+    chatDialogSubmit.disabled = true;
+    chatDialogError.textContent = "Deleting chat and its activity data...";
+    const deleted = await deleteChat(chatDialogChatId);
+    if (deleted) {
+      chatActionDialog.close();
+    } else {
+      chatDialogCancel.disabled = false;
+      chatDialogSubmit.disabled = false;
+    }
+  });
+
+  chatDialogName.addEventListener("input", () => {
+    chatDialogName.removeAttribute("aria-invalid");
+    chatDialogError.textContent = "";
+  });
+  chatDialogCancel.addEventListener("click", () => chatActionDialog.close());
+  chatActionDialog.addEventListener("cancel", (event) => {
+    if (isDeletingChat) {
+      event.preventDefault();
+    }
+  });
+  chatActionDialog.addEventListener("close", () => {
+    chatDialogAction = null;
+    chatDialogChatId = null;
+    chatDialogError.textContent = "";
+  });
 
   function saveActiveConversation(firstQuestion) {
     let activeChat = getActiveChat();
@@ -1078,9 +1145,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const actionButton = target?.closest("button[data-chat-action]");
     if (actionButton) {
       if (actionButton.dataset.chatAction === "rename") {
-        renameChat(actionButton.dataset.chatId);
+        openChatActionDialog("rename", actionButton.dataset.chatId);
       } else if (actionButton.dataset.chatAction === "delete") {
-        deleteChat(actionButton.dataset.chatId);
+        openChatActionDialog("delete", actionButton.dataset.chatId);
       }
       return;
     }
